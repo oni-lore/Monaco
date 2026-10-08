@@ -13,15 +13,15 @@ Core idea: "WhatsApp is where you talk to people. Monaco is where your group liv
 
 ### V1 Confirmed Features
 
-- **Accounts:** Register (username, password, email+verify, phone+verify, birthday, optional avatar), login, logout, change password/email/phone, active sessions, logout other devices, delete account.
-- **Monarch ID:** Rotating discovery identifier (~weekly). Platform creator's ID is permanent.
+- **Accounts:** Register (username, password, email+verify, birthday, optional avatar), login, logout, change password/email, active sessions, logout other devices, delete account. Phone number is collected during registration and stored with the account but **not** verified via SMS/OTP in V1. Email verification is the actual account verification mechanism. Phone number is retained because it may be useful for future calling/communication functionality.
+- **Monarch Identifiers:** Founder has permanent Monarch identifier: MOANARK1. Normal users initially receive their Monarch number based on account join order. Monarch identifiers are automatically assigned by the system. Normal users' Monarch identifiers can automatically rotate. Founder remains MOANARK1 and does not rotate. Founder/platform owner has administrative control over the Monarch system. The system must prevent duplicate active Monarch identifiers. Exact rotation frequency/algorithm remains an implementation detail to be finalized later unless another requirement depends on it.
 - **Connections:** Find by Monarch ID / username / 1-minute one-use link. Connection request + optional intro message. Accept/decline. Remove connection.
-- **Private chats:** Real-time messages, replies (swipe), reactions, media, files, stickers, voice messages, edit (5-min window + Edited indicator), delete, read/typing status (both opt-outable), forward (Forwarded indicator), archive/delete/clear, Enshrines, search.
+- **Private chats:** Real-time messages, replies (swipe), reactions, media, files, stickers, voice messages, edit (5-min window + Edited indicator), delete (Delete for me: disappears from that user's view only; Delete for everyone: disappears for all participants). Backend authorization enforces who can perform each action., read/typing status (both opt-outable), forward (Forwarded indicator), archive/delete/clear, Enshrines, search.
 - **Councils:** Group chats. Name/icon/description, members, multiple admins, invitations (admin-only or all-members setting), polls, Enshrines, Archives, member management.
-- **Polls:** Any member creates. Single/multi-choice. Anonymous or visible. Permanent (no auto-close). Vote changeable.
+- **Polls:** Any member creates. Single/multi-choice. Anonymous or visible. Permanent (no auto-close). Vote changeable. Poll creator can delete their own poll. Founder can delete any poll. Deleted polls must no longer be votable. Show a small Monaco-style historical/poetic indication that the poll has ended/been removed. Example wording direction: Its question has been laid to rest. The exact final wording can be decided during UI/content design.
 - **Enshrines:** Historical records. Custom title. Creator-only removal. Persists even if source message deleted.
 - **Reactions:** 6 defaults (heart, laugh, cry, skull, suspicious, thumbs-up) + picker. Real-time. Private + Council.
-- **Stickers:** Built-in packs + custom uploads. Frequent-first. No marketplace.
+- **Sticker Library:** Monaco has a shared sticker library. Basic/default stickers are included. Founder can upload/add stickers. Founder can authorize specific members to manage/add stickers. Authorized members can upload/add stickers. Normal members cannot add stickers unless explicitly authorized. Custom GIF stickers and other appropriate sticker formats are supported. Founder can revoke sticker-management authorization. Keep sticker permissions simple; do not create a complex role hierarchy.
 - **Voice messages:** Record, cancel, send, playback with speed control. Max 1 hour. Backend enforces limit.
 - **Media/Files:** Images (JPG/PNG/WebP/GIF), Videos (MP4/WebM/MOV), Files (PDF/Office/TXT/ZIP). ~15 MB limit. MIME validated.
 - **Achievements:** Funny/pointless milestones. No competitive leaderboard.
@@ -44,14 +44,18 @@ Single codebase produces Android APK now; iOS/web possible later.
 Strong ecosystem for WebSocket, SQLite (Drift), audio, media pickers, FCM.
 APK sideloading is the V1 distribution method — no Play Store required.
 
-### Backend — Node.js + Fastify
-Hosted free on **Render** (free tier, spins down after 15 min inactivity — acceptable for private group) or Railway.
-Full control over auth, permissions, Monarch ID logic, Council business rules.
-WebSocket server (`ws` library) for real-time events.
+### Backend — Supabase Edge Functions
+Planned backend runtime: Supabase Edge Functions.
+Do not add Vercel, Cloudflare Workers, or another backend hosting layer unless a genuine technical requirement later justifies it.
+Supabase should remain the central backend platform for V1 where practical.
+Backend must enforce authorization and security; the client must never be trusted for permissions.
+WebSocket/realtime via Supabase Supabase Realtime or custom Edge Functions.
 
-### Database — PostgreSQL
-**Supabase** recommended (500 MB free, hosted Postgres, optional Realtime channel).
-Alternative: **Neon** (10 GB free, serverless, useful branch-per-environment feature).
+### Database — PostgreSQL (Supabase Free)
+PostgreSQL is the database via Supabase Free tier. Design around the published Free-tier limits.
+Monaco should support deliberate export/archive/cleanup of old data when storage limits become relevant.
+Important data must not be deleted as the only copy; export/backup should exist before destructive cleanup.
+Do not assume the free tier is unlimited.
 Migrations via `node-pg-migrate`.
 Full-text search via Postgres tsvector/tsquery — no external search engine needed.
 
@@ -64,7 +68,7 @@ Re-authentication required for sensitive actions (account deletion, etc.).
 ### Email Verification — Resend
 Free tier: 3,000 emails/month. Sufficient for a private group.
 
-### Phone/SMS Verification — OPEN DECISION (see D1)
+### Phone Number Collection (no SMS/OTP verification in V1)
 - Firebase Phone Auth: free up to 10 verifications/day.
 - MSG91 (India): ~₹0.20⃢0.50/SMS.
 - Twilio: ~₹5⃢8/SMS.
@@ -97,6 +101,16 @@ Offline queue with idempotency keys.
 Secrets in .env files; never committed. .env.example committed with all required variable names.
 
 ---
+### Username Uniqueness
+- Founder username: ONI_Emrys
+- Usernames are globally unique.
+- Username uniqueness is CASE-INSENSITIVE.
+- ONI_Emrys, oni_emrys, Oni_Emrys, etc. must be treated as the same username for uniqueness purposes.
+- A username cannot be claimed by another account while it is taken.
+- Users are allowed to change their username later.
+- Username uniqueness must be enforced at the backend/database level, not only in the client UI.
+- Do not make usernames permanently immutable.
+
 
 ## 3. Technology Stack Summary
 
@@ -336,6 +350,24 @@ Per spec requirements (Section 30 of Build Prompt Pack):
 - docs/known-limitations.md
 - CHANGELOG.md
 
+
+---
+
+---
+
+## 9. Founder Account Seed Information
+Record the intended Founder account information in the plan as setup information/placeholders:
+- Username: ONI_Emrys
+- Email: onieleven2@gmail.com
+- Phone: 9427555466
+- Birthday: 29-05-2007
+- Profile picture: added later
+- Password: must be created privately during setup; NEVER hard-code it, commit it, or request it in the repository.
+
+---
+
+## 10. Security Requirement
+Do not place the Founder password, OTPs, tokens, API keys, service credentials, or other secrets in source code, Git history, documentation intended for public repositories, or .env files committed to Git.
 
 ---
 
