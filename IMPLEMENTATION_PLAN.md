@@ -371,6 +371,219 @@ Do not place the Founder password, OTPs, tokens, API keys, service credentials, 
 
 ---
 
+---
+
+## 11. Optional Monaco App Lock
+
+### 1. App Lock is optional
+- App Lock is OFF by default unless the user enables it.
+- Users can enable or disable App Lock from Monaco's security settings.
+- Users can configure when the lock activates.
+- Sensible lock conditions may include:
+  - immediately when leaving Monaco
+  - after a configurable period of inactivity
+  - when Monaco is reopened after being backgrounded
+- Exact timeout values and final UI wording can be decided during implementation/UI design.
+- Do not force App Lock on every user.
+
+### 2. Multiple unlock methods are supported
+- The user must be able to choose which supported unlock methods they want.
+- The user may enable: only ONE unlock method OR MULTIPLE unlock methods simultaneously.
+- These methods are alternatives.
+- If multiple methods are enabled, successful authentication using ANY enabled method should unlock Monaco.
+- For example: PIN + fingerprint + face means the user can unlock Monaco with:
+  - their PIN
+  - their fingerprint
+  - their face authentication.
+- The user should not be required to complete every enabled method.
+
+### 3. Supported unlock methods
+The App Lock system should support the following categories where technically available:
+
+#### A. Monaco PIN
+- User-created numeric PIN.
+- Monaco manages this credential.
+- The actual PIN must never be stored in plaintext.
+- Store only a secure representation suitable for authentication.
+
+#### B. Monaco alphanumeric passcode/password
+- User-created passcode.
+- May contain: letters, numbers, or both.
+- Monaco manages this credential.
+- The actual secret must never be stored in plaintext.
+
+#### C. Fingerprint
+- Use the device operating system's secure biometric authentication facilities where available.
+- Monaco must NOT collect, store, or process raw fingerprint data.
+- Monaco only receives the authentication result from the platform.
+
+#### D. Face recognition
+- Use the device operating system's secure biometric authentication facilities where available.
+- Monaco must NOT collect, store, or process raw facial biometric data.
+- Monaco only receives the authentication result from the platform.
+
+#### E. Device credentials
+Where the operating system supports it, Monaco may use the device's own secure authentication mechanism, such as:
+- device PIN
+- device pattern
+- device password
+- These are OS/device credentials and are NOT Monaco credentials.
+
+#### F. Pattern
+- Support a pattern-based unlock method where the target platform allows Monaco to implement it securely.
+- If the platform already provides pattern authentication as part of its device credential system, use the platform mechanism rather than unnecessarily implementing a duplicate system.
+- Do not expose or store the user's device pattern.
+
+#### G. Passkey / platform authentication
+- Support passkey/platform authentication where supported by the target platform and architecture.
+- Do not assume passkeys are available on every device or platform.
+- The implementation should detect availability and only present supported methods.
+
+### 4. Platform capability detection
+The App Lock settings must not show authentication methods that the current device/platform cannot actually use.
+- A device without biometric hardware should not show an unusable fingerprint option.
+- A device without face authentication should not show an unusable face option.
+- Platform-specific authentication capabilities should be detected at runtime.
+- The exact platform APIs and implementation approach should be selected during implementation based on the actual target platform.
+- For Android, prefer the operating system's secure biometric/device-credential facilities rather than implementing custom biometric recognition.
+
+### 5. Security boundary
+App Lock must be a real security boundary, not merely a visual screen.
+Before successful authentication:
+- Do not display private messages.
+- Do not display private media.
+- Do not display private profiles.
+- Do not display private Council content.
+- Do not display private notifications.
+- Do not expose protected cached data through the UI.
+- Do not treat an unlocked-looking UI as authenticated.
+- Authentication and authorization must be enforced correctly.
+
+### 6. Credential security
+For Monaco-managed credentials such as PINs and alphanumeric passcodes:
+- Never store plaintext credentials.
+- Never put them in source code.
+- Never put them in Git.
+- Never log them.
+- Never send them to the Founder.
+- Never expose them through ordinary backend responses.
+- Use an appropriate secure credential-verification design.
+- The exact hashing/key-management approach can be selected during implementation.
+
+For biometric, device-credential, and passkey authentication:
+- Monaco must rely on secure platform authentication mechanisms.
+- Monaco must not receive or store raw biometric information.
+- Monaco must not attempt to reconstruct fingerprints, faces, or device credentials.
+
+### 7. App Lock recovery — Founder-controlled recovery
+A user must have a recovery option if they lose access to all enabled Monaco unlock methods.
+The App Lock screen must provide a recovery option such as:
+"Can't unlock Monaco?"
+→ "Request Founder Recovery"
+
+When selected:
+- The user submits a recovery request.
+- The request is sent to the Monaco Founder/platform owner.
+- The request should identify the relevant account/device/session sufficiently for the Founder to make an informed decision.
+- Do NOT send the user's actual PIN, password, biometric data, device credential, or other secret to the Founder.
+- The request should contain only the information necessary for recovery and security review.
+
+### 8. Founder recovery controls
+The Founder must have an administrative recovery capability for App Lock.
+The Founder should be able to:
+- view pending App Lock recovery requests
+- review the account/device/request information
+- approve a recovery request
+- reject a recovery request
+
+If the Founder approves the recovery request:
+1. The App Lock protection for the affected device must be disabled or reset through an authenticated recovery process.
+2. Monaco-managed App Lock credentials for that device must be invalidated/reset.
+3. Any previously configured Monaco PIN/passcode/pattern credentials associated with that App Lock configuration must no longer unlock Monaco.
+4. The user must be allowed to enter Monaco after recovery.
+5. The user can then configure App Lock again and create new credentials.
+6. Existing account authentication must remain intact.
+7. This recovery operation must not reveal the user's previous credentials to the Founder.
+
+The recovery action must be authenticated and authorized by the backend.
+
+### 9. Device-specific recovery
+App Lock recovery should be associated with the affected account and device/session where practical.
+The Founder should not accidentally disable App Lock on every device belonging to the user when the request concerns only one device.
+The implementation should distinguish between:
+- account identity
+- Monaco App Lock configuration
+- individual device/session authorization
+
+Exact device-identification mechanics can be finalized during implementation.
+
+### 10. Recovery audit/security
+Founder recovery actions are sensitive administrative operations.
+The system should maintain an appropriate security/audit record containing information such as:
+- who requested recovery
+- which account was affected
+- which device/session was affected
+- when the request was made
+- whether it was approved or rejected
+- which Founder/admin performed the action
+- when the action occurred
+
+Do not store the user's actual secrets in the audit record.
+
+### 11. Lock state behavior
+When Monaco is locked:
+- Private application content must remain inaccessible.
+- Failed authentication must keep Monaco locked.
+- Successful authentication using any enabled method unlocks Monaco.
+- Lock state must be handled correctly when the application moves between foreground/background states.
+- The implementation must avoid accidentally exposing cached content during app startup or transitions.
+- The exact session/timeout behavior can be finalized during implementation.
+
+### 12. Relationship to account password
+App Lock does NOT replace the Monaco account authentication system.
+A user can have:
+- Monaco account password
+AND
+- Monaco App Lock
+
+These are separate security layers.
+Changing the normal Monaco account password must not automatically reveal or reset the App Lock credentials unless the final security architecture explicitly requires such behavior.
+Similarly, resetting App Lock must not automatically change the user's Monaco account password.
+
+### 13. Recovery after all methods are lost
+The intended recovery path is:
+User cannot unlock Monaco
+→ selects "Can't unlock Monaco?"
+→ sends Founder Recovery Request
+→ Founder reviews request
+→ Founder approves
+→ affected App Lock configuration/credentials are reset
+→ user enters Monaco
+→ user configures new App Lock methods if desired
+
+The Founder does NOT learn the old credentials.
+
+### 14. Do not overengineer the authentication choices
+The goal is to support multiple secure authentication options without creating a custom biometric/security framework.
+Use platform-provided authentication mechanisms wherever possible.
+Do not build Monaco's own fingerprint scanner, face-recognition system, or biometric database.
+
+Voice recognition is NOT a required V1 unlock method.
+Voice recognition may be investigated as a future experimental feature, but it must not be required for V1 and must not be treated as a trusted primary security mechanism unless a genuinely secure implementation is established.
+
+### 15. Plan review
+- Search the entire IMPLEMENTATION_PLAN.md for contradictory authentication/security assumptions.
+- Make sure App Lock is clearly separate from account authentication.
+- Make sure multiple unlock methods are explicitly supported.
+- Make sure the user can choose one or multiple methods.
+- Make sure Founder recovery is explicitly documented.
+- Make sure recovery resets/invalidate Monaco-managed App Lock credentials.
+- Make sure Founder recovery does not expose the user's old credentials.
+- Make sure biometric/device credentials are handled by the platform rather than stored by Monaco.
+- Mark genuinely unresolved implementation details as unresolved instead of inventing answers.
+
+---
+
 ## 8. Immediate Next Steps After This Plan
 1. Owner answers D1–D7 above (SMS provider, deletion model, DB host, hosting, Monarch creator, sticker scope, poll deletion).
 2. Set up external service accounts: Resend (email verification, free tier sufficient), Cloudflare R2 bucket (media storage, 10 GB free, 0 egress), Firebase project (FCM for push; optionally Phone Auth if D1 chooses it), GitHub account (for CI Actions).
