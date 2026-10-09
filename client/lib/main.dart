@@ -1,7 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:monaco/screens/conversations_screen.dart';
-import 'package:monaco/screens/login_screen.dart';
-import 'package:monaco/screens/registration_screen.dart';
 
 void main() => runApp(const MonacoApp());
 
