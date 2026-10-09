@@ -80,6 +80,16 @@ jobs:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/monaco
         run: npx pg-migrate apply --url "$DATABASE_URL" -- migrations/
 
+      - name: Verify migration applied
+        working-directory: ./backend
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/monaco
+        run: |
+          set -e
+          echo "Checking database tables exist..."
+          PGPASSWORD=postgres psql -U postgres -h localhost -d monaco -c "\dt" | grep -q "users" || (echo "ERROR: 'users' table not found after migration" && exit 1)
+          echo "Migration verified: users table exists"
+
       - name: Run backend integration tests
         working-directory: ./backend
         env:
