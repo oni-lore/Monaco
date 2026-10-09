@@ -78,14 +78,14 @@ jobs:
         working-directory: ./backend
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/monaco
-        run: npx pg-migrate apply -- migrations/
+        run: npx pg-migrate apply --url "$DATABASE_URL" -- migrations/
 
       - name: Run backend integration tests
         working-directory: ./backend
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/monaco
         run: |
-          npx pg-migrate status
+          npx pg-migrate status --url "$DATABASE_URL"
           node -e "
           const { Pool } = require('pg');
           const pool = new Pool({ connectionString: process.env.DATABASE_URL });
