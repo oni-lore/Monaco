@@ -69,6 +69,16 @@ CREATE INDEX idx_connections_status ON connections(status);
 -- ============================================================
 -- Direct conversations / private conversations
 -- ============================================================
+-- Authorization enforcement (application layer):
+-- A user may only participate in a direct conversation if they have an
+-- accepted connection with the other participant. The backend enforces this
+-- via connection-status validation before allowing participant insertion
+-- or message insertion into a direct conversation. The DB schema tracks
+-- participants via conversation_participants, but does not enforce the
+-- connection prerequisite at the database level; this is intentional for
+-- V1 to keep migration complexity minimal, with enforcement in the service.
+-- Direct conversations / private conversations
+-- ============================================================
 CREATE TABLE direct_conversations (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   name VARCHAR(255), -- null for private 1:1, or a label
