@@ -81,7 +81,8 @@ jobs:
         run: |
           set -e
           echo "Creating required PostgreSQL extensions..."
-          PGPASSWORD=postgres psql -U postgres -h localhost -d monaco -c "CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\"" 2>/dev/null || echo "Extension creation attempted"
+          PGPASSWORD=postgres psql -U postgres -h localhost -d monaco -c "CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\"" 2>&1
+          PGPASSWORD=postgres psql -U postgres -h localhost -d monaco -c "SELECT 1 FROM pg_extension WHERE extname = 'uuid-ossp';" 2>&1
           
       - name: Run database migrations
         working-directory: ./backend
