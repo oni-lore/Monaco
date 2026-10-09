@@ -83,6 +83,7 @@ CREATE TABLE direct_conversations (
 -- A user may only participate in a direct conversation if they have an
 -- accepted connection with the conversation creator. This trigger enforces
 -- the prerequisite at the database level, preventing unauthorized participation.
+-- The conversation creator is always permitted to participate.
 CREATE OR REPLACE FUNCTION enforce_direct_conversation_connection()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -92,11 +93,14 @@ BEGIN
   
   -- If conversation creator is set, verify accepted connection
   IF creator_uuid IS NOT NULL THEN
-    IF (SELECT COUNT(*) FROM connections 
-        WHERE ((requester_id = NEW.user_id AND recipient_id = creator_uuid) OR
-               (recipient_id = NEW.user_id AND requester_id = creator_uuid))
-          AND status = 'accepted') = 0 THEN
-      RAISE EXCEPTION 'User must have an accepted connection with the conversation creator (ID: %) to participate in this direct conversation.', creator_uuid;
+    -- The conversation creator is always permitted to participate
+    IF NEW.user_id != creator_uuid THEN
+      IF (SELECT COUNT(*) FROM connections 
+          WHERE ((requester_id = NEW.user_id AND recipient_id = creator_uuid) OR
+                 (recipient_id = NEW.user_id AND requester_id = creator_uuid))
+            AND status = 'accepted') = 0 THEN
+        RAISE EXCEPTION 'User must have an accepted connection with the conversation creator (ID: %) to participate in this direct conversation.', creator_uuid;
+      END IF;
     END IF;
   END IF;
   
