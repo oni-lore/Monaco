@@ -1,6 +1,9 @@
 -- Migration: 001_initial_schema.down.sql
 -- Description: Rollback core schema for Monaco V1
 
+DROP TRIGGER IF EXISTS trigger_enforce_direct_conversation_connection ON conversation_participants CASCADE;
+DROP FUNCTION IF EXISTS enforce_direct_conversation_connection() CASCADE;
+
 DROP TABLE IF EXISTS audit_log CASCADE;
 DROP TABLE IF EXISTS refresh_tokens CASCADE;
 DROP TABLE IF EXISTS enshrines CASCADE;

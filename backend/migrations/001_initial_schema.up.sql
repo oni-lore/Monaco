@@ -69,18 +69,9 @@ CREATE INDEX idx_connections_status ON connections(status);
 -- ============================================================
 -- Direct conversations / private conversations
 -- ============================================================
--- Authorization enforcement (application layer):
--- A user may only participate in a direct conversation if they have an
--- accepted connection with the other participant. The backend enforces this
--- via connection-status validation before allowing participant insertion
--- or message insertion into a direct conversation. The DB schema tracks
--- participants via conversation_participants, but does not enforce the
--- connection prerequisite at the database level; this is intentional for
--- V1 to keep migration complexity minimal, with enforcement in the service.
--- Direct conversations / private conversations
--- ============================================================
 CREATE TABLE direct_conversations (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  creator_id UUID REFERENCES users(id) ON DELETE SET NULL,
   name VARCHAR(255), -- null for private 1:1, or a label
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -88,15 +79,35 @@ CREATE TABLE direct_conversations (
 -- ============================================================
 -- Conversation participants
 -- ============================================================
-CREATE TABLE conversation_participants (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  conversation_id UUID REFERENCES direct_conversations(id) ON DELETE CASCADE,
-  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
-  role VARCHAR(50) DEFAULT 'member' CHECK (role IN ('member', 'admin')),
-  joined_at TIMESTAMPTZ DEFAULT NOW(),
-  left_at TIMESTAMPTZ,
-  UNIQUE(conversation_id, user_id)
-);
+-- Authorization enforcement:
+-- A user may only participate in a direct conversation if they have an
+-- accepted connection with the conversation creator. This trigger enforces
+-- the prerequisite at the database level, preventing unauthorized participation.
+CREATE OR REPLACE FUNCTION enforce_direct_conversation_connection()
+RETURNS TRIGGER AS $$
+BEGIN
+  -- Look up the conversation creator
+  DECLARE creator_uuid UUID;
+  SELECT creator_id INTO creator_uuid FROM direct_conversations WHERE id = NEW.conversation_id;
+  
+  -- If conversation creator is set, verify accepted connection
+  IF creator_uuid IS NOT NULL THEN
+    IF (SELECT COUNT(*) FROM connections 
+        WHERE ((requester_id = NEW.user_id AND recipient_id = creator_uuid) OR
+               (recipient_id = NEW.user_id AND requester_id = creator_uuid))
+          AND status = 'accepted') = 0 THEN
+      RAISE EXCEPTION 'User must have an accepted connection with the conversation creator (ID: %) to participate in this direct conversation.', creator_uuid;
+    END IF;
+  END IF;
+  
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trigger_enforce_direct_conversation_connection
+  BEFORE INSERT ON conversation_participants
+  FOR EACH ROW
+  EXECUTE FUNCTION enforce_direct_conversation_connection();
 
 -- Indexes for conversation participants
 CREATE INDEX idx_conv_participants_user ON conversation_participants(user_id);
