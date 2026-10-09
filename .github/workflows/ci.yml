@@ -74,6 +74,15 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y postgresql-client
 
+      - name: Ensure PostgreSQL extensions
+        working-directory: ./backend
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/monaco
+        run: |
+          set -e
+          echo "Creating required PostgreSQL extensions..."
+          PGPASSWORD=postgres psql -U postgres -h localhost -d monaco -c "CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\"" 2>/dev/null || echo "Extension creation attempted"
+          
       - name: Run database migrations
         working-directory: ./backend
         env:
