@@ -10,7 +10,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- Users table
 -- ============================================================
 CREATE TABLE users (
-  id UUID PRIMARY KEY DEFAULT random_uuid(),
+  id UUID PRIMARY KEY ,
   username VARCHAR(255) UNIQUE NOT NULL,
   password_hash VARCHAR(255) NOT NULL,
   email VARCHAR(255) UNIQUE NOT NULL,
@@ -33,7 +33,7 @@ CREATE INDEX idx_users_created_at ON users(created_at);
 -- Monarch IDs table
 -- ============================================================
 CREATE TABLE monarch_ids (
-  id UUID PRIMARY KEY DEFAULT random_uuid(),
+  id UUID PRIMARY KEY ,
   user_id UUID REFERENCES users(id) ON DELETE CASCADE,
   monarch_id VARCHAR(255) NOT NULL UNIQUE,
   valid_from TIMESTAMPTZ DEFAULT NOW(),
@@ -51,7 +51,7 @@ CREATE INDEX idx_monarch_ids_active ON monarch_ids(is_active) WHERE is_active = 
 -- Connections table
 -- ============================================================
 CREATE TABLE connections (
-  id UUID PRIMARY KEY DEFAULT random_uuid(),
+  id UUID PRIMARY KEY ,
   requester_id UUID REFERENCES users(id) ON DELETE CASCADE,
   recipient_id UUID REFERENCES users(id) ON DELETE CASCADE,
   status VARCHAR(50) DEFAULT 'pending' CHECK (status IN ('pending', 'accepted', 'declined')),
@@ -70,7 +70,7 @@ CREATE INDEX idx_connections_status ON connections(status);
 -- Direct conversations / private conversations
 -- ============================================================
 CREATE TABLE direct_conversations (
-  id UUID PRIMARY KEY DEFAULT random_uuid(),
+  id UUID PRIMARY KEY ,
   creator_id UUID REFERENCES users(id) ON DELETE SET NULL,
   name VARCHAR(255), -- null for private 1:1, or a label
   created_at TIMESTAMPTZ DEFAULT NOW()
@@ -121,7 +121,7 @@ CREATE INDEX idx_conv_participants_conv ON conversation_participants(conversatio
 -- Messages table
 -- ============================================================
 CREATE TABLE messages (
-  id UUID PRIMARY KEY DEFAULT random_uuid(),
+  id UUID PRIMARY KEY ,
   conversation_id UUID REFERENCES direct_conversations(id) ON DELETE CASCADE,
   sender_id UUID REFERENCES users(id) ON DELETE SET NULL,
   reply_to UUID REFERENCES messages(id) ON DELETE SET NULL,
@@ -144,7 +144,7 @@ CREATE INDEX idx_messages_created_at ON messages(created_at);
 -- Read receipts
 -- =============================================================
 CREATE TABLE read_receipts (
-  id UUID PRIMARY KEY DEFAULT random_uuid(),
+  id UUID PRIMARY KEY ,
   message_id UUID REFERENCES messages(id) ON DELETE CASCADE,
   user_id UUID REFERENCES users(id) ON DELETE CASCADE,
   read_at TIMESTAMPTZ DEFAULT NOW(),
@@ -159,7 +159,7 @@ CREATE INDEX idx_read_receipts_user ON read_receipts(user_id);
 -- Reactions table
 -- =============================================================
 CREATE TABLE reactions (
-  id UUID PRIMARY KEY DEFAULT random_uuid(),
+  id UUID PRIMARY KEY ,
   message_id UUID REFERENCES messages(id) ON DELETE CASCADE,
   user_id UUID REFERENCES users(id) ON DELETE CASCADE,
   reaction VARCHAR(50) NOT NULL CHECK (reaction IN ('heart', 'laugh', 'cry', 'skull', 'suspicious', 'thumbs-up')),
@@ -175,7 +175,7 @@ CREATE INDEX idx_reactions_user ON reactions(user_id);
 -- Councils table
 -- =============================================================
 CREATE TABLE councils (
-  id UUID PRIMARY KEY DEFAULT random_uuid(),
+  id UUID PRIMARY KEY ,
   name VARCHAR(255) NOT NULL,
   description TEXT,
   icon_url TEXT,
@@ -193,7 +193,7 @@ CREATE INDEX idx_councils_archived ON councils(is_archived);
 -- Council members table
 -- =============================================================
 CREATE TABLE council_members (
-  id UUID PRIMARY KEY DEFAULT random_uuid(),
+  id UUID PRIMARY KEY ,
   council_id UUID REFERENCES councils(id) ON DELETE CASCADE,
   user_id UUID REFERENCES users(id) ON DELETE CASCADE,
   role VARCHAR(50) DEFAULT 'member' CHECK (role IN ('member', 'admin')),
@@ -210,7 +210,7 @@ CREATE INDEX idx_council_members_user ON council_members(user_id);
 -- Council settings table
 -- =============================================================
 CREATE TABLE council_settings (
-  id UUID PRIMARY KEY DEFAULT random_uuid(),
+  id UUID PRIMARY KEY ,
   council_id UUID REFERENCES councils(id) ON DELETE CASCADE,
   allow_member_invitations BOOLEAN DEFAULT FALSE,
   allow_member_edit_info BOOLEAN DEFAULT FALSE,
@@ -223,7 +223,7 @@ CREATE TABLE council_settings (
 -- Polls table
 -- =============================================================
 CREATE TABLE polls (
-  id UUID PRIMARY KEY DEFAULT random_uuid(),
+  id UUID PRIMARY KEY ,
   council_id UUID REFERENCES councils(id) ON DELETE CASCADE,
   question VARCHAR(500) NOT NULL,
   is_anonymous BOOLEAN DEFAULT FALSE,
@@ -236,7 +236,7 @@ CREATE TABLE polls (
 -- Poll options table
 -- =============================================================
 CREATE TABLE poll_options (
-  id UUID PRIMARY KEY DEFAULT random_uuid(),
+  id UUID PRIMARY KEY ,
   poll_id UUID REFERENCES polls(id) ON DELETE CASCADE,
   option_text VARCHAR(500) NOT NULL,
   option_order INTEGER DEFAULT 0,
@@ -250,7 +250,7 @@ CREATE INDEX idx_poll_options_poll ON poll_options(poll_id);
 -- Poll votes table
 -- =============================================================
 CREATE TABLE poll_votes (
-  id UUID PRIMARY KEY DEFAULT random_uuid(),
+  id UUID PRIMARY KEY ,
   poll_id UUID REFERENCES polls(id) ON DELETE CASCADE,
   user_id UUID REFERENCES users(id) ON DELETE CASCADE,
   option_id UUID REFERENCES poll_options(id) ON DELETE SET NULL,
@@ -266,7 +266,7 @@ CREATE INDEX idx_poll_votes_user ON poll_votes(user_id);
 -- Enshrines table
 -- =============================================================
 CREATE TABLE enshrines (
-  id UUID PRIMARY KEY DEFAULT random_uuid(),
+  id UUID PRIMARY KEY ,
   source_message_id UUID REFERENCES messages(id) ON DELETE CASCADE,
   creator_id UUID REFERENCES users(id) ON DELETE CASCADE,
   title VARCHAR(255) NOT NULL,
@@ -284,7 +284,7 @@ CREATE INDEX idx_enshrines_creator ON enshrines(creator_id);
 -- Refresh tokens table (for session management)
 -- =============================================================
 CREATE TABLE refresh_tokens (
-  id UUID PRIMARY KEY DEFAULT random_uuid(),
+  id UUID PRIMARY KEY ,
   user_id UUID REFERENCES users(id) ON DELETE CASCADE,
   token_hash VARCHAR(255) NOT NULL,
   expires_at TIMESTAMPTZ NOT NULL,
@@ -299,7 +299,7 @@ CREATE INDEX idx_refresh_tokens_user ON refresh_tokens(user_id);
 -- Audit log (optional, for security monitoring)
 -- =============================================================
 CREATE TABLE audit_log (
-  id UUID PRIMARY KEY DEFAULT random_uuid(),
+  id UUID PRIMARY KEY ,
   user_id UUID REFERENCES users(id) ON DELETE SET NULL,
   action VARCHAR(100) NOT NULL,
   path VARCHAR(500),
