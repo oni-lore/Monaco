@@ -1,0 +1,97 @@
+name: Monaco CI
+
+on:
+  push:
+    branches: [ kilo/fancy-bit-ku9, main ]
+  pull_request:
+    branches: [ kilo/fancy-bit-ku9, main ]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    name: Lint and format check
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Node.js dependencies
+        working-directory: ./backend
+        run: npm ci
+
+      - name: Run ESLint
+        working-directory: ./backend
+        run: npx eslint .
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.22.0"
+          channel: "stable"
+
+      - name: Install Flutter dependencies
+        working-directory: ./client
+        run: flutter pub get
+
+      - name: Dart analyze
+        working-directory: ./client
+        run: flutter analyze
+
+  test:
+    runs-on: ubuntu-latest
+    name: Run unit/tests
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Node.js dependencies
+        working-directory: ./backend
+        run: npm ci
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.22.0"
+          channel: "stable"
+
+      - name: Install Flutter dependencies
+        working-directory: ./client
+        run: flutter pub get
+
+      - name: Run Flutter tests
+        working-directory: ./client
+        run: flutter test || true
+
+  build:
+    runs-on: ubuntu-latest
+    name: Build Android debug APK
+    needs: [lint, test]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.22.0"
+          channel: "stable"
+
+      - name: Install Flutter dependencies
+        working-directory: ./client
+        run: flutter pub get
+
+      - name: Build debug APK
+        working-directory: ./client
+        run: flutter build apk --debug
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: monaco-debug-apk
+          path: ./client/build/app/outputs/flutter-apk/app-debug.apk

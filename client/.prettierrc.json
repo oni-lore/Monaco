@@ -1,0 +1,9 @@
+{
+  "syntax": "postcss-syntax",
+  "rules": {
+    "selector-pseudo-class-no-unknown": true,
+    "color-function": true,
+    "postcss-merge-longhand": true,
+    "postcss-reduce-transforms": true
+  }
+}

@@ -1,0 +1,20 @@
+-- Migration: 001_initial_schema.down.sql
+-- Description: Rollback core schema for Monaco V1
+
+DROP TABLE IF EXISTS audit_log CASCADE;
+DROP TABLE IF EXISTS refresh_tokens CASCADE;
+DROP TABLE IF EXISTS enshrines CASCADE;
+DROP TABLE IF EXISTS poll_votes CASCADE;
+DROP TABLE IF EXISTS poll_options CASCADE;
+DROP TABLE IF EXISTS polls CASCADE;
+DROP TABLE IF EXISTS council_settings CASCADE;
+DROP TABLE IF EXISTS council_members CASCADE;
+DROP TABLE IF EXISTS councils CASCADE;
+DROP TABLE IF EXISTS reactions CASCADE;
+DROP TABLE IF EXISTS read_receipts CASCADE;
+DROP TABLE IF EXISTS messages CASCADE;
+DROP TABLE IF EXISTS conversation_participants CASCADE;
+DROP TABLE IF EXISTS direct_conversations CASCADE;
+DROP TABLE IF EXISTS connections CASCADE;
+DROP TABLE IF EXISTS monarch_ids CASCADE;
+DROP TABLE IF EXISTS users CASCADE;

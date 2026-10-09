@@ -1,0 +1,13 @@
+include: package:flutter_lints/flutter.yaml
+
+linter:
+  rules:
+    - avoid_prints
+    - prefer_const_constructors
+    - prefer_const_literals_to_create_immutables
+    - sort_child_properties_last
+    - trailing_colons
+    - unnecessary_string_interpolations
+    - always_specify_types
+    - use_to_json
+    - use_build_context_synchronously

@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/monaco
+      - JWT_SECRET=${JWT_SECRET}
+      - ENABLE_PHONE_VERIFICATION=${ENABLE_PHONE_VERIFICATION}
+    depends on:
+      - db
+    volumes:
+      - ./backend:/usr/src/app
+    restart: unless-stopped
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: monaco
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
