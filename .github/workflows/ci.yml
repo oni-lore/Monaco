@@ -88,7 +88,7 @@ jobs:
         working-directory: ./backend
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/monaco
-        run: npx pg-migrate apply --url "$DATABASE_URL" -- migrations/
+        run: npx pg-migrate --url "$DATABASE_URL"
 
       - name: Verify migration applied
         working-directory: ./backend
