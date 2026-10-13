@@ -42,10 +42,19 @@ cp backend/.env.example backend/.env
 # Edit .env with your values (DATABASE_URL, JWT_SECRET, etc.)
 
 # 5. Run database migration
-cd backend && npx pg-migrate apply -- migrations/
+cd backend && npm run migrate   # needs DATABASE_URL; uses psql (see backend/scripts/migrate.sh)
 
-# 6. Start the backend server
+# 6. Verify schema
+cd backend && npm run verify-schema   # checks required tables + trigger
+
+# 7. Run the backend server
 cd backend && node index.js
+
+# 8. Run the Flutter app
+cd client
+flutter run
+# Or build debug APK:
+flutter build apk --debug
 ```
 
 ### Environment Variables
@@ -73,7 +82,7 @@ See `backend/.env.example` for all required variables. Key variables:
 
 ### Database Migrations
 
-New migrations are added to `backend/migrations/` following the naming convention `NNN_description.up.sql`. Use `pg-migrate` to manage applied migrations.
+New migrations are added to `backend/migrations/` following the naming convention `NNN_description.up.sql`. `backend/scripts/migrate.sh` (via `npm run migrate`) applies them in order, once each, and fails on any SQL error. `backend/scripts/verify-schema.sh` (via `npm run verify-schema`) checks that required tables and the authorization trigger exist.
 
 ### Security Notes
 
@@ -82,3 +91,15 @@ New migrations are added to `backend/migrations/` following the naming conventio
 - Passwords are bcrypt-hashed never stored in plaintext
 - Row Level Security policies must be configured after Supabase project creation
 - Credentials and secrets are managed via `.env` files, never committed
+
+### Known Limitations (V1)
+
+- Phone/SMS verification skipped (email-only), per D1 default
+- No iOS build configured (Android-first)
+- Media upload via pre-signed URLs not yet configured
+- Real-time WebSocket events not yet implemented
+- No Councils, polls, Enshrines in V1 MVP
+
+## Phase 1: Authentication & Accounts (pending)
+
+...when ready.

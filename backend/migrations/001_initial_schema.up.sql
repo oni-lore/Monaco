@@ -3,14 +3,13 @@
 -- Author: Monaco Team
 -- Generated: 2026-10-09
 
--- Enable UUID extension
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+-- UUID defaults use gen_random_uuid(), built into PostgreSQL 13+ (no extension needed).
 
 -- ============================================================
 -- Users table
 -- ============================================================
 CREATE TABLE users (
-  id UUID PRIMARY KEY ,
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   username VARCHAR(255) UNIQUE NOT NULL,
   password_hash VARCHAR(255) NOT NULL,
   email VARCHAR(255) UNIQUE NOT NULL,
@@ -33,7 +32,7 @@ CREATE INDEX idx_users_created_at ON users(created_at);
 -- Monarch IDs table
 -- ============================================================
 CREATE TABLE monarch_ids (
-  id UUID PRIMARY KEY ,
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID REFERENCES users(id) ON DELETE CASCADE,
   monarch_id VARCHAR(255) NOT NULL UNIQUE,
   valid_from TIMESTAMPTZ DEFAULT NOW(),
@@ -51,7 +50,7 @@ CREATE INDEX idx_monarch_ids_active ON monarch_ids(is_active) WHERE is_active = 
 -- Connections table
 -- ============================================================
 CREATE TABLE connections (
-  id UUID PRIMARY KEY ,
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   requester_id UUID REFERENCES users(id) ON DELETE CASCADE,
   recipient_id UUID REFERENCES users(id) ON DELETE CASCADE,
   status VARCHAR(50) DEFAULT 'pending' CHECK (status IN ('pending', 'accepted', 'declined')),
@@ -70,7 +69,7 @@ CREATE INDEX idx_connections_status ON connections(status);
 -- Direct conversations / private conversations
 -- ============================================================
 CREATE TABLE direct_conversations (
-  id UUID PRIMARY KEY ,
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   creator_id UUID REFERENCES users(id) ON DELETE SET NULL,
   name VARCHAR(255), -- null for private 1:1, or a label
   created_at TIMESTAMPTZ DEFAULT NOW()
@@ -84,11 +83,27 @@ CREATE TABLE direct_conversations (
 -- accepted connection with the conversation creator. This trigger enforces
 -- the prerequisite at the database level, preventing unauthorized participation.
 -- The conversation creator is always permitted to participate.
+CREATE TABLE conversation_participants (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  conversation_id UUID NOT NULL REFERENCES direct_conversations(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  role VARCHAR(50) DEFAULT 'member' CHECK (role IN ('member', 'admin')),
+  joined_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(conversation_id, user_id)
+);
+
+-- Authorization enforcement:
+-- A user may only participate in a direct conversation if they have an
+-- accepted connection with the conversation creator. This trigger enforces
+-- the prerequisite at the database level, preventing unauthorized participation.
+-- The conversation creator is always permitted to participate.
 CREATE OR REPLACE FUNCTION enforce_direct_conversation_connection()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER AS
+$$
+DECLARE
+  creator_uuid UUID;
 BEGIN
   -- Look up the conversation creator
-  DECLARE creator_uuid UUID;
   SELECT creator_id INTO creator_uuid FROM direct_conversations WHERE id = NEW.conversation_id;
   
   -- If conversation creator is set, verify accepted connection
@@ -121,7 +136,7 @@ CREATE INDEX idx_conv_participants_conv ON conversation_participants(conversatio
 -- Messages table
 -- ============================================================
 CREATE TABLE messages (
-  id UUID PRIMARY KEY ,
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   conversation_id UUID REFERENCES direct_conversations(id) ON DELETE CASCADE,
   sender_id UUID REFERENCES users(id) ON DELETE SET NULL,
   reply_to UUID REFERENCES messages(id) ON DELETE SET NULL,
@@ -131,8 +146,7 @@ CREATE TABLE messages (
   edit_count INTEGER DEFAULT 0,
   edited_at TIMESTAMPTZ,
   deletion_state VARCHAR(50) DEFAULT 'active' CHECK (deletion_state IN ('active', 'deleted_for_sender', 'deleted_for_everyone')),
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  edited_at TIMESTAMPTZ
+  created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- Indexes for messages
@@ -144,7 +158,7 @@ CREATE INDEX idx_messages_created_at ON messages(created_at);
 -- Read receipts
 -- =============================================================
 CREATE TABLE read_receipts (
-  id UUID PRIMARY KEY ,
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   message_id UUID REFERENCES messages(id) ON DELETE CASCADE,
   user_id UUID REFERENCES users(id) ON DELETE CASCADE,
   read_at TIMESTAMPTZ DEFAULT NOW(),
@@ -155,11 +169,11 @@ CREATE TABLE read_receipts (
 CREATE INDEX idx_read_receipts_message ON read_receipts(message_id);
 CREATE INDEX idx_read_receipts_user ON read_receipts(user_id);
 
--- ==========================================================--
+-- ============================================================
 -- Reactions table
 -- =============================================================
 CREATE TABLE reactions (
-  id UUID PRIMARY KEY ,
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   message_id UUID REFERENCES messages(id) ON DELETE CASCADE,
   user_id UUID REFERENCES users(id) ON DELETE CASCADE,
   reaction VARCHAR(50) NOT NULL CHECK (reaction IN ('heart', 'laugh', 'cry', 'skull', 'suspicious', 'thumbs-up')),
@@ -171,11 +185,11 @@ CREATE TABLE reactions (
 CREATE INDEX idx_reactions_message ON reactions(message_id);
 CREATE INDEX idx_reactions_user ON reactions(user_id);
 
--- ==========================================================--
+-- ============================================================
 -- Councils table
 -- =============================================================
 CREATE TABLE councils (
-  id UUID PRIMARY KEY ,
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name VARCHAR(255) NOT NULL,
   description TEXT,
   icon_url TEXT,
@@ -193,7 +207,7 @@ CREATE INDEX idx_councils_archived ON councils(is_archived);
 -- Council members table
 -- =============================================================
 CREATE TABLE council_members (
-  id UUID PRIMARY KEY ,
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   council_id UUID REFERENCES councils(id) ON DELETE CASCADE,
   user_id UUID REFERENCES users(id) ON DELETE CASCADE,
   role VARCHAR(50) DEFAULT 'member' CHECK (role IN ('member', 'admin')),
@@ -210,7 +224,7 @@ CREATE INDEX idx_council_members_user ON council_members(user_id);
 -- Council settings table
 -- =============================================================
 CREATE TABLE council_settings (
-  id UUID PRIMARY KEY ,
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   council_id UUID REFERENCES councils(id) ON DELETE CASCADE,
   allow_member_invitations BOOLEAN DEFAULT FALSE,
   allow_member_edit_info BOOLEAN DEFAULT FALSE,
@@ -223,7 +237,7 @@ CREATE TABLE council_settings (
 -- Polls table
 -- =============================================================
 CREATE TABLE polls (
-  id UUID PRIMARY KEY ,
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   council_id UUID REFERENCES councils(id) ON DELETE CASCADE,
   question VARCHAR(500) NOT NULL,
   is_anonymous BOOLEAN DEFAULT FALSE,
@@ -236,7 +250,7 @@ CREATE TABLE polls (
 -- Poll options table
 -- =============================================================
 CREATE TABLE poll_options (
-  id UUID PRIMARY KEY ,
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   poll_id UUID REFERENCES polls(id) ON DELETE CASCADE,
   option_text VARCHAR(500) NOT NULL,
   option_order INTEGER DEFAULT 0,
@@ -250,7 +264,7 @@ CREATE INDEX idx_poll_options_poll ON poll_options(poll_id);
 -- Poll votes table
 -- =============================================================
 CREATE TABLE poll_votes (
-  id UUID PRIMARY KEY ,
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   poll_id UUID REFERENCES polls(id) ON DELETE CASCADE,
   user_id UUID REFERENCES users(id) ON DELETE CASCADE,
   option_id UUID REFERENCES poll_options(id) ON DELETE SET NULL,
@@ -266,7 +280,7 @@ CREATE INDEX idx_poll_votes_user ON poll_votes(user_id);
 -- Enshrines table
 -- =============================================================
 CREATE TABLE enshrines (
-  id UUID PRIMARY KEY ,
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   source_message_id UUID REFERENCES messages(id) ON DELETE CASCADE,
   creator_id UUID REFERENCES users(id) ON DELETE CASCADE,
   title VARCHAR(255) NOT NULL,
@@ -284,7 +298,7 @@ CREATE INDEX idx_enshrines_creator ON enshrines(creator_id);
 -- Refresh tokens table (for session management)
 -- =============================================================
 CREATE TABLE refresh_tokens (
-  id UUID PRIMARY KEY ,
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID REFERENCES users(id) ON DELETE CASCADE,
   token_hash VARCHAR(255) NOT NULL,
   expires_at TIMESTAMPTZ NOT NULL,
@@ -299,11 +313,10 @@ CREATE INDEX idx_refresh_tokens_user ON refresh_tokens(user_id);
 -- Audit log (optional, for security monitoring)
 -- =============================================================
 CREATE TABLE audit_log (
-  id UUID PRIMARY KEY ,
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID REFERENCES users(id) ON DELETE SET NULL,
   action VARCHAR(100) NOT NULL,
   path VARCHAR(500),
-  ip_address INET,
   user_agent TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -311,11 +324,12 @@ CREATE TABLE audit_log (
 -- Index for audit log
 CREATE INDEX idx_audit_log_created_at ON audit_log(created_at);
 
--- ==========================================================--
+-- ============================================================
 -- Update triggers for updated_at columns
 -- =============================================================
 CREATE OR REPLACE FUNCTION update_updated_at_column()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER AS
+$$
 BEGIN
   NEW.updated_at = NOW();
   RETURN NEW;
@@ -331,18 +345,3 @@ CREATE TRIGGER trigger_update_councils
   BEFORE UPDATE ON councils
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
-
--- ==========================================================--
--- Security: Row Level Security policies (disabled by default,
--- enabled per D3 Supabase setup)
--- =============================================================
--- These policies are commented out for initial setup.
--- Uncomment and configure after Supabase project is created.
---
--- ALTER TABLE users ENABLE ROW LEVEL SECURITY;
--- CREATE POLICY "Users can read own data" ON users FOR SELECT USING (auth.uid() = id);
--- CREATE POLICY "Users can update own data" ON users FOR UPDATE USING (auth.uid() = id);
---
--- ALTER TABLE conversations ENABLE ROW LEVEL SECURITY;
--- CREATE POLICY "Participants can read conversation" ON conversations FOR SELECT USING (TRUE);
--- CREATE POLICY "Members can send messages" ON messages FOR INSERT WITH CHECK (TRUE);

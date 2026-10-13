@@ -49,7 +49,7 @@ This starts:
 
 ```bash
 # From the backend directory
-npx pg-migrate apply -- migrations/
+npm run migrate   # needs DATABASE_URL; uses psql (see backend/scripts/migrate.sh)
 ```
 
 ### 6. Verify the backend is running
@@ -97,25 +97,32 @@ flutter test
 
 ```bash
 # Create a new migration
-npx pg-migrate make add_users_table
+npx pg-make make add_users_table   # or manually create a new .up.sql file
 
 # Apply pending migrations
-npx pg-migrate apply -- migrations/
+npm run migrate   # needs DATABASE_URL; uses psql (see backend/scripts/migrate.sh)
 
 # Rollback last migration
-npx pg-migrate redo -- migrations/
+npm run migrate -- --skip-existing   # or use the migrate.sh script directly
 ```
 
-## Directory Reference
+### .gitignore
 
-```
-├── client/           ← Flutter Android app
-├── backend/          ← Node.js + Fastify API
-├── docs/             ← This guide + generated docs
-├── infra/            ← Docker Compose + scripts
-├── migrations/       ← SQL database migrations
-└── docs/             ← Project documentation
-```
+The root `.gitignore` excludes `node_modules/`, `.env*`, build artifacts, and IDE files so that real credentials and runtime dependencies are never committed.
+
+### CI / GitHub Actions
+
+The `.github/workflows/ci.yml` workflow runs on every push/PR to `kilo/fancy-bit-ku9` or `main`. It:
+
+1. Installs Node.js, Flutter, and dependencies
+2. Starts a PostgreSQL 16-alpine service
+3. Waits for PostgreSQL to be ready
+4. Runs `npm run migrate` (applies SQL migrations via `psql` with `ON_ERROR_STOP`)
+5. Runs `npm run verify-schema` (checks required tables + trigger exist)
+6. Runs `npm test` (executes the 6 authorization integration tests)
+7. Builds an Android debug APK and uploads it as an artifact
+
+All services, secrets, and database connections are free-tier compatible. No paid APIs or SMS fallbacks are used.
 
 ## Known Limitations (V1)
 
@@ -124,3 +131,18 @@ npx pg-migrate redo -- migrations/
 - Media upload via pre-signed URLs not yet configured
 - Real-time WebSocket events not yet implemented
 - No Councils, polls, Enshrines in V1 MVP
+
+## Feature Flags
+
+| Flag | Default | Description |
+|---|---|---|
+| `ENABLE_PHONE_VERIFICATION` | `false` | Set to `true` to enable SMS (potentially paid) |
+| `ENABLE_CLOUDINER` | `false` | Image CDN alternative to R2 |
+
+## Compliance & Privacy
+
+- Read receipts opt-out enforced server-side
+- Typing indicator opt-out enforced server-side
+- Birthday visibility controlled per user
+- No public follower system, activity feed, or social profile
+- All protected resources authorized server-side

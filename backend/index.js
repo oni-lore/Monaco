@@ -11,16 +11,16 @@ const pool = new Pool({
 });
 
 // Helper: verify JWT from Authorization header
-async function verifyToken(req, res, next) {
+// NOTE: must NOT also take/call a `next` callback (Fastify v5 would run the
+// route handler twice). Reply and return on failure; just return on success.
+async function verifyToken(req, res) {
   try {
     const authorization = req.headers.authorization;
     if (!authorization || !authorization.startsWith('Bearer ')) {
       return res.status(401).send({ error: 'Missing or invalid authorization header' });
     }
     const token = authorization.substring(7);
-    const payload = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = payload;
-    next();
+    req.user = jwt.verify(token, process.env.JWT_SECRET);
   } catch (err) {
     return res.status(401).send({ error: 'Invalid or expired token' });
   }
@@ -113,20 +113,20 @@ fastify.post('/conversations', { preHandler: verifyToken }, async (req, res) => 
 
   // Create the direct conversation with creator as owner
   const result = await pool.query(
-    'INSERT INTO direct_conversations (id, creator_id, name, created_at) VALUES (UUID_GENERATE_V4(), $1, NULL, NOW()) RETURNING id',
+    'INSERT INTO direct_conversations (id, creator_id, name, created_at) VALUES (gen_random_uuid(), $1, NULL, NOW()) RETURNING id',
     [creatorId]
   );
   const conversationId = result.rows[0].id;
 
   // Add creator as participant
   await pool.query(
-    'INSERT INTO conversation_participants (id, conversation_id, user_id, role, joined_at) VALUES (UUID_GENERATE_V4(), $1, $2, \'member\', NOW())',
+    'INSERT INTO conversation_participants (id, conversation_id, user_id, role, joined_at) VALUES (gen_random_uuid(), $1, $2, \'member\', NOW())',
     [conversationId, creatorId]
   );
 
   // Add target as participant (they already have accepted connection, trigger will verify)
   await pool.query(
-    'INSERT INTO conversation_participants (id, conversation_id, user_id, role, joined_at) VALUES (UUID_GENERATE_V4(), $1, $2, \'member\', NOW())',
+    'INSERT INTO conversation_participants (id, conversation_id, user_id, role, joined_at) VALUES (gen_random_uuid(), $1, $2, \'member\', NOW())',
     [conversationId, targetUserId]
   );
 
@@ -223,13 +223,12 @@ fastify.post('/conversations/:conversationId/messages', { preHandler: verifyToke
 
   const result = await pool.query(
     `INSERT INTO messages (id, conversation_id, sender_id, content_type, content_text, created_at) 
-     VALUES (UUID_GENERATE_V4(), $1, $2, $3, $4, NOW()) RETURNING id, created_at`,
+     VALUES (gen_random_uuid(), $1, $2, $3, $4, NOW()) RETURNING id, created_at`,
     [conversationId, userId, content_type, content_text || null]
   );
 
   res.send({ success: true, messageId: result.rows[0].id, created_at: result.rows[0].created_at });
 });
 
-// Login required middleware already defined above
 // Export the fastify instance
 module.exports = fastify;

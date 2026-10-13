@@ -4,7 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "migrate": "bash scripts/migrate.sh",
+    "verify-schema": "bash scripts/verify-schema.sh",
+    "test": "node --test \"test/*.test.js\""
   },
   "keywords": [],
   "author": "",
