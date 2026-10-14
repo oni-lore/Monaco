@@ -22,6 +22,13 @@ jobs:
 
       - name: Generate Android scaffold
         run: flutter create . --name monaco
+   - name: Persist Android scaffold
+     run: |
+       cd client
+       git config user.email "actions@github.com"
+       git config user.name "GitHub Actions"
+       git add client/android/ client/.dart_tool/
+       git commit -m "Android scaffold: add Flutter Android Gradle project"
 
       - name: Install Flutter dependencies
         working-directory: ./client
