@@ -109,11 +109,9 @@ jobs:
           channel: "stable"
 
       - name: Generate Android scaffold
+        working-directory: ./client
         run: |
-          cd /tmp
-          flutter create --project-name=monaco --platforms=android temp_monaco
-          cp -r temp_monaco/android ${GITHUB_WORKSPACE}/client/
-          rm -rf temp_monaco
+          flutter create --platforms=android .
 
       - name: Commit Android scaffold
         run: |
