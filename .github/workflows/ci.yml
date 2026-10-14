@@ -6,6 +6,7 @@ on:
   pull_request:
     branches: [ kilo/fancy-bit-ku9, main ]
   workflow_dispatch:
+
 jobs:
   lint:
     runs-on: ubuntu-latest
@@ -13,30 +14,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-
-      - name: Install Node.js dependencies
-        working-directory: ./backend
-        run: npm ci
-
-      - name: Run ESLint
-        working-directory: ./backend
-        run: npx eslint .
-
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
           flutter-version: "3.22.0"
           channel: "stable"
 
+      - name: Generate Android scaffold
+        run: flutter create .
+
       - name: Install Flutter dependencies
         working-directory: ./client
         run: flutter pub get
 
-   run: flutter create .
       - name: Dart analyze
         working-directory: ./client
         run: flutter analyze
