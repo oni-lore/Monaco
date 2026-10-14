@@ -24,9 +24,7 @@ jobs:
         run: |
           cd /tmp
           flutter create --project-name=monaco --platforms=android temp_monaco
-          cp -r temp_monaco/android client/
-          cp temp_monaco/.dart_tool client/.dart_tool 2>/dev/null || true
-          cp temp_monaco/.gitignore client/.gitignore 2>/dev/null || true
+          cp -r temp_monaco/android ${GITHUB_WORKSPACE}/client/
           rm -rf temp_monaco
 
       - name: Persist Android scaffold
