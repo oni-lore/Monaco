@@ -23,6 +23,10 @@ jobs:
           flutter-version: "3.22.0"
           channel: "stable"
 
+      - name: Clean Flutter cache
+        working-directory: ./client
+        run: flutter clean
+
       - name: Install Flutter dependencies
         working-directory: ./client
         run: flutter pub get
@@ -124,6 +128,10 @@ jobs:
         with:
           flutter-version: "3.22.0"
           channel: "stable"
+
+      - name: Clean Flutter cache
+        working-directory: ./client
+        run: flutter clean
 
       - name: Install Flutter dependencies
         working-directory: ./client
