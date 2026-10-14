@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Fails (exit 1) unless the required tables and the authorization trigger exist.
-set -euo pipefail:
+set -euo pipefail
 : "${DATABASE_URL:?DATABASE_URL must be set}"
 
 required_tables=(users connections direct_conversations conversation_participants messages)
