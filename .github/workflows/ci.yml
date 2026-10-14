@@ -7,6 +7,9 @@ on:
     branches: [ kilo/fancy-bit-ku9, main ]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   lint:
     runs-on: ubuntu-latest
