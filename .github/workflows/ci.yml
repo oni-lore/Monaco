@@ -22,7 +22,7 @@ jobs:
 
       - name: Generate Android scaffold
         working-directory: ./client
-        run: flutter create .
+        run: flutter create . --platforms=android
 
       - name: Persist Android scaffold
         run: |
