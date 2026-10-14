@@ -21,7 +21,8 @@ jobs:
           channel: "stable"
 
       - name: Generate Android scaffold
-        run: flutter create . --project-name=monaco
+        working-directory: ./client
+        run: flutter create .
 
       - name: Persist Android scaffold
         run: |
