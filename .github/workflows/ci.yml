@@ -21,7 +21,7 @@ jobs:
           channel: "stable"
 
       - name: Generate Android scaffold
-        run: flutter create . --name monaco
+        run: flutter create .
 
       - name: Persist Android scaffold
         run: |
