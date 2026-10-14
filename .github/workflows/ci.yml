@@ -20,20 +20,6 @@ jobs:
           flutter-version: "3.22.0"
           channel: "stable"
 
-      - name: Generate Android scaffold
-        run: |
-          cd /tmp
-          flutter create --project-name=monaco --platforms=android temp_monaco
-          cp -r temp_monaco/android $GITHUB_WORKSPACE/client/
-          rm -rf temp_monaco
-
-      - name: Persist Android scaffold
-        run: |
-          git config user.email "actions@github.com"
-          git config user.name "GitHub Actions"
-          git add client/android/
-          git commit -m "Android scaffold: add Flutter Android Gradle project"
-
       - name: Install Flutter dependencies
         working-directory: ./client
         run: flutter pub get
@@ -113,6 +99,19 @@ jobs:
     needs: [lint, test]
     steps:
       - uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.22.0"
+          channel: "stable"
+
+      - name: Generate Android scaffold
+        run: |
+          cd /tmp
+          flutter create --project-name=monaco --platforms=android temp_monaco
+          cp -r temp_monaco/android ${GITHUB_WORKSPACE}/client/
+          rm -rf temp_monaco
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
