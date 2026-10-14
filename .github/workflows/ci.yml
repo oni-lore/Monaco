@@ -36,6 +36,7 @@ jobs:
         working-directory: ./client
         run: flutter pub get
 
+   run: flutter create .
       - name: Dart analyze
         working-directory: ./client
         run: flutter analyze
