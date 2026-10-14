@@ -5,7 +5,6 @@ import 'package:monaco/providers/auth_provider.dart';
 import 'package:monaco/screens/auth/login_screen.dart';
 import 'package:monaco/screens/auth/registration_screen.dart';
 import 'package:monaco/screens/home_screen.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

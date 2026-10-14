@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user.dart';
-import '../models/user.dart' show AuthTokens, AuthResponse;
 import '../services/auth_api.dart';
 
 class AuthProvider extends ChangeNotifier {
@@ -51,15 +50,12 @@ class AuthProvider extends ChangeNotifier {
   Future<void> _loadUserProfile() async {
     if (_tokens == null) return;
     try {
-      // We'll need to add a getProfile endpoint to the backend
-      // For now, we'll store user info in SharedPreferences as well
       final prefs = await SharedPreferences.getInstance();
       final userJson = prefs.getString('user_data');
       if (userJson != null) {
         _user = User.fromJson(jsonDecode(userJson) as Map<String, dynamic>);
       }
     } catch (e) {
-      // If loading fails, clear auth
       await _clearAuthData();
     }
   }
@@ -145,7 +141,6 @@ class AuthProvider extends ChangeNotifier {
 
   @override
   void dispose() {
-    // Don't dispose _api as it's a singleton-like service
     super.dispose();
   }
 }
