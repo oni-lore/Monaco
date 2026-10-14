@@ -5,7 +5,7 @@ on:
     branches: [ kilo/fancy-bit-ku9, main ]
   pull_request:
     branches: [ kilo/fancy-bit-ku9, main ]
-
+  workflow_dispatch:
 jobs:
   lint:
     runs-on: ubuntu-latest
