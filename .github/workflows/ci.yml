@@ -88,7 +88,7 @@ jobs:
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/monaco
           JWT_SECRET: ci-test-secret
-        run: npm test
+        run: npm ci && npm test
 
       - name: Verify .gitignore excludes secrets
         run: |
