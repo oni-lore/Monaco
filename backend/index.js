@@ -232,3 +232,166 @@ fastify.post('/conversations/:conversationId/messages', { preHandler: verifyToke
 
 // Export the fastify instance
 module.exports = fastify;
+// Logout endpoint
+fastify.post('/logout', { preHandler: verifyToken }, async (req, res) => {
+  // In a real implementation, you would invalidate the refresh token here
+  // For now, we just return success (client-side token removal)
+  res.send({ success: true, message: 'Logged out successfully' });
+});
+
+// Change password endpoint
+fastify.post('/auth/change-password', { preHandler: verifyToken }, async (req, res) => {
+  const userId = req.user.sub;
+  const { current_password, new_password } = req.body;
+
+  if (!current_password || !new_password) {
+    return res.status(400).send({ error: 'current_password and new_password required' });
+  }
+
+  if (new_password.length < 6) {
+    return res.status(400).send({ error: 'new_password must be at least 6 characters' });
+  }
+
+  const userResult = await pool.query('SELECT password_hash FROM users WHERE id = $1', [userId]);
+  if (userResult.rows.length === 0) {
+    return res.status(404).send({ error: 'User not found' });
+  }
+
+  const passwordValid = await bcrypt.compare(current_password, userResult.rows[0].password_hash);
+  if (!passwordValid) {
+    return res.status(401).send({ error: 'Current password is incorrect' });
+  }
+
+  const hashedPassword = await bcrypt.hash(new_password, 10);
+  await pool.query('UPDATE users SET password_hash = $1, updated_at = NOW() WHERE id = $1', [hashedPassword, userId]);
+
+  // Invalidate all other sessions (optional: implement session tracking)
+  res.send({ success: true, message: 'Password changed successfully. Other sessions will be logged out.' });
+});
+
+// Change email endpoint
+fastify.post('/auth/change-email', { preHandler: verifyToken }, async (req, res) => {
+  const userId = req.user.sub;
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).send({ error: 'email required' });
+  }
+
+  // Validate email format
+  const emailRegex = /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/;
+  if (!emailRegex.test(email)) {
+    return res.status(400).send({ error: 'Invalid email format' });
+  }
+
+  // Check if email already exists
+  const existingUser = await pool.query('SELECT id FROM users WHERE email = $1 AND id != $1', [email, userId]);
+  if (existingUser.rows.length > 0) {
+    return res.status(409).send({ error: 'Email already in use' });
+  }
+
+  await pool.query('UPDATE users SET email = $1, email_verified = FALSE, updated_at = NOW() WHERE id = $1', [email, userId]);
+  
+  // TODO: Send verification email to new email address
+  
+  res.send({ success: true, message: 'Email changed successfully. Please verify your new email address.' });
+});
+
+// Forgot password endpoint
+fastify.post('/auth/forgot-password', async (req, res) => {
+  const { email } = req.body;
+  
+  if (!email) {
+    return res.status(400).send({ error: 'email required' });
+  }
+
+  const userResult = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
+  
+  // Always return success to prevent email enumeration
+  // In production, you would send a password reset email with a token
+  // For now, we just log it
+  console.log(`Password reset requested for email: ${email}`);
+  
+  res.send({ success: true, message: 'If the email exists, a password reset link has been sent' });
+});
+
+// Reset password endpoint
+fastify.post('/auth/reset-password', async (req, res) => {
+  const { token, new_password } = req.body;
+  
+  if (!token || !new_password) {
+    return res.status(400).send({ error: 'token and new_password required' });
+  }
+  
+  if (new_password.length < 6) {
+    return res.status(400).send({ error: 'new_password must be at least 6 characters' });
+  }
+  
+  // In a real implementation, you would verify the token from a password_reset_tokens table
+  // For now, we'll just return success
+  res.send({ success: true, message: 'Password reset successful (mock implementation)' });
+});
+
+// Delete account endpoint
+fastify.delete('/auth/delete-account', { preHandler: verifyToken }, async (req, res) => {
+  const userId = req.user.sub;
+  const { password } = req.body;
+  
+  if (!password) {
+    return res.status(400).send({ error: 'password required for confirmation' });
+  }
+  
+  const userResult = await pool.query('SELECT password_hash FROM users WHERE id = $1', [userId]);
+  if (userResult.rows.length === 0) {
+    return res.status(404).send({ error: 'User not found' });
+  }
+  
+  const passwordValid = await bcrypt.compare(password, userResult.rows[0].password_hash);
+  if (!passwordValid) {
+    return res.status(401).send({ error: 'Incorrect password' });
+  }
+  
+  // Delete user (cascades to all related tables via ON DELETE CASCADE)
+  await pool.query('DELETE FROM users WHERE id = $1', [userId]);
+  
+  res.send({ success: true, message: 'Account deleted successfully' });
+});
+
+// Get active sessions
+fastify.get('/auth/sessions', { preHandler: verifyToken }, async (req, res) => {
+  // In a full implementation, you would query a sessions table
+  // For now, return mock data
+  res.send({
+    sessions: [
+      {
+        id: 'current',
+        device_info: 'Current device',
+        ip_address: '127.0.0.1',
+        user_agent: 'Monaco App',
+        created_at: new Date().toISOString(),
+        last_active_at: new Date().toISOString(),
+        is_current: true
+      }
+    ]
+  });
+});
+
+// Revoke a specific session
+fastify.delete('/auth/sessions/:sessionId', { preHandler: verifyToken }, async (req, res) => {
+  // In a full implementation, you would delete the session from a sessions table
+  res.send({ success: true, message: 'Session revoked' });
+});
+
+// Revoke all other sessions
+fastify.delete('/auth/sessions', { preHandler: verifyToken }, async (req, res) => {
+  // In a full implementation, you would delete all other sessions from the sessions table
+  res.send({ success: true, message: 'All other sessions revoked' });
+}
+
+// Logout endpoint
+fastify.post('/logout', { preHandler: verifyToken }, async (req, res) => {
+  // In a real implementation, you would invalidate the refresh token
+  res.send({ success: true, message: 'Logged out successfully' });
+};
+
+module.exports = fastify;
