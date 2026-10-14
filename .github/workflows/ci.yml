@@ -108,6 +108,14 @@ jobs:
           cp -r temp_monaco/android ${GITHUB_WORKSPACE}/client/
           rm -rf temp_monaco
 
+      - name: Commit Android scaffold
+        run: |
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions"
+          git add client/android/
+          git commit -m "Android scaffold: add Flutter Android Gradle project [skip ci]" || echo "No changes to commit"
+          git push origin kilo/fancy-bit-ku9
+
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
