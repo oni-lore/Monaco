@@ -21,8 +21,13 @@ jobs:
           channel: "stable"
 
       - name: Generate Android scaffold
-        working-directory: ./client
-        run: flutter create -p monaco . --platforms=android
+        run: |
+          cd /tmp
+          flutter create --project-name=monaco --platforms=android temp_monaco
+          cp -r temp_monaco/android client/
+          cp temp_monaco/.dart_tool client/.dart_tool 2>/dev/null || true
+          cp temp_monaco/.gitignore client/.gitignore 2>/dev/null || true
+          rm -rf temp_monaco
 
       - name: Persist Android scaffold
         run: |
@@ -55,7 +60,7 @@ jobs:
           --health-cmd "pg_isready -d postgresql://postgres:postgres@localhost:5432/monaco"
           --health-interval 10s
           --health-timeout 5s
-          --health-retries 5
+          --health-retries: 5
     steps:
       - uses: actions/checkout@v4
 
