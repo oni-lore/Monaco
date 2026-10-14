@@ -26,7 +26,6 @@ jobs:
 
       - name: Persist Android scaffold
         run: |
-          cd client
           git config user.email "actions@github.com"
           git config user.name "GitHub Actions"
           git add client/android/ client/.dart_tool/
