@@ -172,7 +172,5 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  void _navigateToRegister() {
-    Navigator.pushNamed(context, '/register');
-  }
+
 }
