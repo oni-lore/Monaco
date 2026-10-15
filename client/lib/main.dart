@@ -8,7 +8,7 @@ import 'package:monaco/screens/home_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  final SharedPreferences prefs = await SharedPreferences.getInstance();
+  await SharedPreferences.getInstance();
   runApp(const MonacoApp());
 }
 
