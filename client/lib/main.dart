@@ -17,7 +17,7 @@ class MonacoApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => ChangeNotifierProvider(
-    create: (_) => AuthProvider(),
+    create: (BuildContext _) => AuthProvider(),
     child: MaterialApp(
       title: 'Monaco',
       theme: ThemeData(
