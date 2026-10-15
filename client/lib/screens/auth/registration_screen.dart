@@ -131,7 +131,6 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                       return null;
                     },
                     textInputAction: TextInputAction.next,
-                    obscureText: _obscurePassword,
                   ),
                   const SizedBox(height: 16),
                   TextFormField(
@@ -158,7 +157,6 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                       return null;
                     },
                     textInputAction: TextInputAction.done,
-                    obscureText: _obscureConfirmPassword,
                     onFieldSubmitted: (_) => _handleRegister(),
                   ),
                   const SizedBox(height: 8),
