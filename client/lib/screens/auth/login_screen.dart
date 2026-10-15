@@ -114,7 +114,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 24),
                   Consumer<AuthProvider>(
-                    builder: (context, auth, _) {
+                    builder: (BuildContext context, AuthProvider auth, Widget? _) {
                       return CustomButton(
                         text: 'Login',
                         isLoading: auth.isLoading,

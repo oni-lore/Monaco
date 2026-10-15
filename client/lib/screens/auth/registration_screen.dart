@@ -160,7 +160,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                   ),
                   const SizedBox(height: 8),
                   Consumer<AuthProvider>(
-                    builder: (context, auth, _) {
+                    builder: (BuildContext context, AuthProvider auth, Widget? _) {
                       if (auth.error != null) {
                         return Padding(
                           padding: const EdgeInsets.only(bottom: 16),
@@ -176,7 +176,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                   ),
                   const SizedBox(height: 24),
                   Consumer<AuthProvider>(
-                    builder: (context, auth, _) {
+                    builder: (BuildContext context, AuthProvider auth, Widget? _) {
                       return CustomButton(
                         text: 'Create Account',
                         isLoading: auth.isLoading,
