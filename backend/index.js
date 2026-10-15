@@ -189,6 +189,8 @@ fastify.post('/conversations/:conversationId/messages', { preHandler: verifyToke
   res.send({ success: true, messageId: result.rows[0].id, created_at: result.rows[0].created_at });
 });
 
+fastify.post('/auth/change-password', { preHandler: verifyToken }, async (req, res) => {
+  const userId = req.user.sub;
   const { current_password, new_password } = req.body;
 
   if (!current_password || !new_password) {
