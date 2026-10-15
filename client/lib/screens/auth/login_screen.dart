@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:monaco/providers/auth_provider.dart';
-import 'package:monaco/screens/auth/registration_screen.dart';
 import 'package:monaco/widgets/custom_button.dart';
-import 'package:monaco/widgets/custom_text_field.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});

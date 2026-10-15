@@ -52,7 +52,7 @@ class AuthGate extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Consumer<AuthProvider>(
-    builder: (context, auth, _) {
+    builder: (BuildContext context, AuthProvider auth, Widget? _) {
       if (!auth.isInitialized) {
         return const Scaffold(
           body: Center(child: CircularProgressIndicator()),
