@@ -6,7 +6,7 @@ import '../models/user.dart';
 import '../services/auth_api.dart';
 
 class AuthProvider extends ChangeNotifier {
-  final AuthApiService _api = AuthApiService();
+  // final AuthApiService _api = AuthApiService();
 
   User? _user;
   AuthTokens? _tokens;
