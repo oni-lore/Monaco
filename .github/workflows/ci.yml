@@ -27,6 +27,10 @@ jobs:
         working-directory: ./client
         run: flutter clean
 
+      - name: Repair pub cache
+        working-directory: ./client
+        run: flutter pub cache repair
+
       - name: Install Flutter dependencies
         working-directory: ./client
         run: flutter pub get
@@ -130,6 +134,10 @@ jobs:
       - name: Clean Flutter cache
         working-directory: ./client
         run: flutter clean
+
+      - name: Repair pub cache
+        working-directory: ./client
+        run: flutter pub cache repair
 
       - name: Install Flutter dependencies
         working-directory: ./client
