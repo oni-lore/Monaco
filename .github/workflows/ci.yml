@@ -1,3 +1,4 @@
+
 name: Monaco CI
 
 on:
@@ -20,20 +21,25 @@ jobs:
     name: Lint and format check
     steps:
       - uses: actions/checkout@v4
+
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
           flutter-version: "3.22.0"
           channel: "stable"
+
       - name: Clean Flutter cache
         working-directory: ./client
         run: flutter clean
+
       - name: Repair pub cache
         working-directory: ./client
         run: flutter pub cache repair
+
       - name: Install Flutter dependencies
         working-directory: ./client
         run: flutter pub get
+
       - name: Dart analyze
         working-directory: ./client
         run: flutter analyze
@@ -50,13 +56,14 @@ jobs:
           POSTGRES_PASSWORD: postgres
         ports:
           - 5432:5432
+
     steps:
       - uses: actions/checkout@v4
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: "22"
 
       - name: Wait for PostgreSQL
         run: |
@@ -93,6 +100,7 @@ jobs:
     runs-on: ubuntu-latest
     name: Build Android debug APK
     needs: [lint, test]
+
     steps:
       - uses: actions/checkout@v4
         with:
@@ -106,8 +114,7 @@ jobs:
 
       - name: Generate Android scaffold
         working-directory: ./client
-        run: |
-          flutter create --platforms=android .
+        run: flutter create --platforms=android .
 
       - name: Commit Android scaffold
         run: |
@@ -118,12 +125,6 @@ jobs:
           git add client/android/
           git commit -m "Android scaffold: add Flutter Android Gradle project [skip ci]" || echo "No changes to commit"
           git push origin kilo/fancy-bit-ku9
-
-      - name: Set up Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: "3.22.0"
-          channel: "stable"
 
       - name: Clean Flutter cache
         working-directory: ./client
@@ -139,7 +140,9 @@ jobs:
 
       - name: Build debug APK
         working-directory: ./client
-        run: flutter build apk --debug
+        run: |
+          flutter build apk --debug \
+            --dart-define=API_BASE_URL=https://monaco-api-bvo9.onrender.com
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
