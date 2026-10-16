@@ -1,39 +1,43 @@
 name: Monaco CI
-true:
+
+on:
   push:
     branches:
-    - kilo/fancy-bit-ku9
-    - main
+      - kilo/fancy-bit-ku9
+      - main
   pull_request:
     branches:
-    - kilo/fancy-bit-ku9
-    - main
-  workflow_dispatch: null
+      - kilo/fancy-bit-ku9
+      - main
+  workflow_dispatch:
+
 permissions:
   contents: write
+
 jobs:
   lint:
     runs-on: ubuntu-latest
     name: Lint and format check
     steps:
-    - uses: actions/checkout@v4
-    - name: Set up Flutter
-      uses: subosito/flutter-action@v2
-      with:
-        flutter-version: 3.22.0
-        channel: stable
-    - name: Clean Flutter cache
-      working-directory: ./client
-      run: flutter clean
-    - name: Repair pub cache
-      working-directory: ./client
-      run: flutter pub cache repair
-    - name: Install Flutter dependencies
-      working-directory: ./client
-      run: flutter pub get
-    - name: Dart analyze
-      working-directory: ./client
-      run: flutter analyze
+      - uses: actions/checkout@v4
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.22.0"
+          channel: "stable"
+      - name: Clean Flutter cache
+        working-directory: ./client
+        run: flutter clean
+      - name: Repair pub cache
+        working-directory: ./client
+        run: flutter pub cache repair
+      - name: Install Flutter dependencies
+        working-directory: ./client
+        run: flutter pub get
+      - name: Dart analyze
+        working-directory: ./client
+        run: flutter analyze
+
   test:
     runs-on: ubuntu-latest
     name: Run unit and integration tests
@@ -45,91 +49,100 @@ jobs:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
         ports:
-        - 5432:5432
+          - 5432:5432
     steps:
-    - uses: actions/checkout@v4
-    - name: Set up Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '22'
-    - name: Wait for PostgreSQL
-      run: "until pg_isready -h localhost -p 5432 -U postgres; do\n  sleep 1\ndone\n"
-    - name: Install backend dependencies
-      working-directory: ./backend
-      run: npm install
-    - name: Run database migrations (fail-fast) and verify schema
-      working-directory: ./backend
-      run: 'export DATABASE_URL="postgresql://postgres:postgres@localhost:5432/monaco"
+      - uses: actions/checkout@v4
 
-        npm run migrate
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
 
-        '
-    - name: Run backend integration tests
-      working-directory: ./backend
-      run: 'export DATABASE_URL="postgresql://postgres:postgres@localhost:5432/monaco"
+      - name: Wait for PostgreSQL
+        run: |
+          until pg_isready -h localhost -p 5432 -U postgres; do
+            sleep 1
+          done
 
-        npm test
+      - name: Install backend dependencies
+        working-directory: ./backend
+        run: npm install
 
-        '
-    - name: Verify .gitignore excludes secrets
-      run: "if git check-ignore -q .env; then\n  echo \".env is properly ignored\"\
-        \nelse\n  echo \".env is NOT ignored\"\n  exit 1\nfi\n"
+      - name: Run database migrations (fail-fast) and verify schema
+        working-directory: ./backend
+        run: |
+          export DATABASE_URL="postgresql://postgres:postgres@localhost:5432/monaco"
+          npm run migrate
+
+      - name: Run backend integration tests
+        working-directory: ./backend
+        run: |
+          export DATABASE_URL="postgresql://postgres:postgres@localhost:5432/monaco"
+          npm test
+
+      - name: Verify .gitignore excludes secrets
+        run: |
+          if git check-ignore -q .env; then
+            echo ".env is properly ignored"
+          else
+            echo ".env is NOT ignored"
+            exit 1
+          fi
+
   build:
     runs-on: ubuntu-latest
     name: Build Android debug APK
-    needs:
-    - lint
-    - test
+    needs: [lint, test]
     steps:
-    - uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-    - name: Set up Flutter
-      uses: subosito/flutter-action@v2
-      with:
-        flutter-version: 3.22.0
-        channel: stable
-    - name: Generate Android scaffold
-      working-directory: ./client
-      run: 'flutter create --platforms=android .
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-        '
-    - name: Commit Android scaffold
-      run: 'git config user.email "actions@github.com"
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.22.0"
+          channel: "stable"
 
-        git config user.name "GitHub Actions"
+      - name: Generate Android scaffold
+        working-directory: ./client
+        run: |
+          flutter create --platforms=android .
 
-        git fetch origin kilo/fancy-bit-ku9
+      - name: Commit Android scaffold
+        run: |
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions"
+          git fetch origin kilo/fancy-bit-ku9
+          git rebase origin/kilo/fancy-bit-ku9
+          git add client/android/
+          git commit -m "Android scaffold: add Flutter Android Gradle project [skip ci]" || echo "No changes to commit"
+          git push origin kilo/fancy-bit-ku9
 
-        git rebase origin/kilo/fancy-bit-ku9
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.22.0"
+          channel: "stable"
 
-        git add client/android/
+      - name: Clean Flutter cache
+        working-directory: ./client
+        run: flutter clean
 
-        git commit -m "Android scaffold: add Flutter Android Gradle project [skip
-        ci]" || echo "No changes to commit"
+      - name: Repair pub cache
+        working-directory: ./client
+        run: flutter pub cache repair
 
-        git push origin kilo/fancy-bit-ku9
+      - name: Install Flutter dependencies
+        working-directory: ./client
+        run: flutter pub get
 
-        '
-    - name: Set up Flutter
-      uses: subosito/flutter-action@v2
-      with:
-        flutter-version: 3.22.0
-        channel: stable
-    - name: Clean Flutter cache
-      working-directory: ./client
-      run: flutter clean
-    - name: Repair pub cache
-      working-directory: ./client
-      run: flutter pub cache repair
-    - name: Install Flutter dependencies
-      working-directory: ./client
-      run: flutter pub get
-    - name: Build debug APK
-      working-directory: ./client
-      run: flutter build apk --debug
-    - name: Upload APK artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: monaco-debug-apk
-        path: ./client/build/app/outputs/flutter-apk/app-debug.apk
+      - name: Build debug APK
+        working-directory: ./client
+        run: flutter build apk --debug
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: monaco-debug-apk
+          path: ./client/build/app/outputs/flutter-apk/app-debug.apk
