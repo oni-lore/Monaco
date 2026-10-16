@@ -60,7 +60,7 @@ class AuthApiService {
       Uri.parse('$baseUrl/logout'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({'refresh_token': refreshToken}),
-    );
+    ).timeout(_requestTimeout);
   }
 
   Future<void> changePassword({
@@ -107,9 +107,9 @@ class AuthApiService {
 
   Future<void> requestPasswordReset({required String email}) async {
     final response = await _client.post(
-      Uri.parse('$baseUrl/logout'),
+      Uri.parse('$baseUrl/auth/forgot-password'),
       headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'refresh_token': refreshToken}),
+      body: jsonEncode({'email': email}),
     ).timeout(_requestTimeout);
 
     if (response.statusCode != 200) {
@@ -123,9 +123,9 @@ class AuthApiService {
     required String newPassword,
   }) async {
     final response = await _client.post(
-      Uri.parse('$baseUrl/auth/forgot-password'),
+      Uri.parse('$baseUrl/auth/reset-password'),
       headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'email': email}),
+      body: jsonEncode({'token': token, 'new_password': newPassword}),
     ).timeout(_requestTimeout);
 
     if (response.statusCode != 200) {
