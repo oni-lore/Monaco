@@ -1,44 +1,39 @@
 name: Monaco CI
-
-on:
+true:
   push:
-    branches: [ kilo/fancy-bit-ku9, main ]
+    branches:
+    - kilo/fancy-bit-ku9
+    - main
   pull_request:
-    branches: [ kilo/fancy-bit-ku9, main ]
-  workflow_dispatch:
-
+    branches:
+    - kilo/fancy-bit-ku9
+    - main
+  workflow_dispatch: null
 permissions:
   contents: write
-
 jobs:
   lint:
     runs-on: ubuntu-latest
     name: Lint and format check
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: "3.22.0"
-          channel: "stable"
-
-      - name: Clean Flutter cache
-        working-directory: ./client
-        run: flutter clean
-
-      - name: Repair pub cache
-        working-directory: ./client
-        run: flutter pub cache repair
-
-      - name: Install Flutter dependencies
-        working-directory: ./client
-        run: flutter pub get
-
-      - name: Dart analyze
-        working-directory: ./client
-        run: flutter analyze
-
+    - uses: actions/checkout@v4
+    - name: Set up Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        flutter-version: 3.22.0
+        channel: stable
+    - name: Clean Flutter cache
+      working-directory: ./client
+      run: flutter clean
+    - name: Repair pub cache
+      working-directory: ./client
+      run: flutter pub cache repair
+    - name: Install Flutter dependencies
+      working-directory: ./client
+      run: flutter pub get
+    - name: Dart analyze
+      working-directory: ./client
+      run: flutter analyze
   test:
     runs-on: ubuntu-latest
     name: Run unit and integration tests
@@ -50,105 +45,89 @@ jobs:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
         ports:
-          - 5432:5432
+        - 5432:5432
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-
-      - name: Wait for PostgreSQL
-        working-directory: ./backend
-        env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/monaco
-        run: |
-          for i in $(seq 1 30); do
-            pg_isready -d "$DATABASE_URL" && exit 0
-            sleep 2
-          done
-          echo "PostgreSQL did not become ready" && exit 1
-
-      - name: Run database migrations (fail-fast) and verify schema
-        working-directory: ./backend
-        env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/monaco
-          JWT_SECRET: ci-test-secret
-        run: npm run migrate
-
-      - name: Run backend integration tests
-        working-directory: ./backend
-        env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/monaco
-          JWT_SECRET: ci-test-secret
-        run: npm ci && npm test
-
-      - name: Verify .gitignore excludes secrets
-        run: |
-          if grep -q '\.env' .gitignore; then
-            echo "PASS: .gitignore excludes .env files"
-          else
-            echo "FAIL: .gitignore does not exclude .env files"
-            exit 1
-          fi
-          if grep -q 'node_modules' .gitignore; then
-            echo "PASS: .gitignore excludes node_modules"
-          else
-            echo "FAIL: .gitignore does not exclude node_modules"
-            exit 1
-          fi
-
+    - uses: actions/checkout@v4
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+    - name: Wait for PostgreSQL
+      working-directory: ./backend
+      env:
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/monaco
+      run: "for i in $(seq 1 30); do\n  pg_isready -d \"$DATABASE_URL\" && exit 0\n\
+        \  sleep 2\ndone\necho \"PostgreSQL did not become ready\" && exit 1\n"
+    - name: Run database migrations (fail-fast) and verify schema
+      working-directory: ./backend
+      env:
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/monaco
+        JWT_SECRET: ci-test-secret
+      run: npm run migrate
+    - name: Run backend integration tests
+      working-directory: ./backend
+      env:
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/monaco
+        JWT_SECRET: ci-test-secret
+      run: npm ci && npm test
+    - name: Verify .gitignore excludes secrets
+      run: "if grep -q '\\.env' .gitignore; then\n  echo \"PASS: .gitignore excludes\
+        \ .env files\"\nelse\n  echo \"FAIL: .gitignore does not exclude .env files\"\
+        \n  exit 1\nfi\nif grep -q 'node_modules' .gitignore; then\n  echo \"PASS:\
+        \ .gitignore excludes node_modules\"\nelse\n  echo \"FAIL: .gitignore does\
+        \ not exclude node_modules\"\n  exit 1\nfi\n"
   build:
     runs-on: ubuntu-latest
     name: Build Android debug APK
-    needs: [lint, test]
+    needs:
+    - lint
+    - test
     steps:
-      - uses: actions/checkout@v4
+    - uses: actions/checkout@v4
+    - name: Set up Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        flutter-version: 3.22.0
+        channel: stable
+    - name: Generate Android scaffold
+      working-directory: ./client
+      run: 'flutter create --platforms=android .
 
-      - name: Set up Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: "3.22.0"
-          channel: "stable"
+        '
+    - name: Commit Android scaffold
+      run: 'git config user.email "actions@github.com"
 
-      - name: Generate Android scaffold
-        working-directory: ./client
-        run: |
-          flutter create --platforms=android .
+        git config user.name "GitHub Actions"
 
-      - name: Commit Android scaffold
-        run: |
-          git config user.email "actions@github.com"
-          git config user.name "GitHub Actions"
-          git add client/android/
-          git commit -m "Android scaffold: add Flutter Android Gradle project [skip ci]" || echo "No changes to commit"
-          git push origin kilo/fancy-bit-ku9
+        git fetch origin kilo/fancy-bit-ku9
 
-      - name: Set up Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: "3.22.0"
-          channel: "stable"
+        git rebase origin/kilo/fancy-bit-ku9
 
-      - name: Clean Flutter cache
-        working-directory: ./client
-        run: flutter clean
+        git add client/android/
 
-      - name: Repair pub cache
-        working-directory: ./client
-        run: flutter pub cache repair
+        git commit -m "Android scaffold: add Flutter Android Gradle project [skip
+        ci]" || echo "No changes to commit"
 
-      - name: Install Flutter dependencies
-        working-directory: ./client
-        run: flutter pub get
-
-      - name: Build debug APK
-        working-directory: ./client
-        run: flutter build apk --debug
-
-      - name: Upload APK artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: monaco-debug-apk
-          path: ./client/build/app/outputs/flutter-apk/app-debug.apk
+        git push origin kilo/fancy-bit-ku9'
+    - name: Set up Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        flutter-version: 3.22.0
+        channel: stable
+    - name: Clean Flutter cache
+      working-directory: ./client
+      run: flutter clean
+    - name: Repair pub cache
+      working-directory: ./client
+      run: flutter pub cache repair
+    - name: Install Flutter dependencies
+      working-directory: ./client
+      run: flutter pub get
+    - name: Build debug APK
+      working-directory: ./client
+      run: flutter build apk --debug
+    - name: Upload APK artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: monaco-debug-apk
+        path: ./client/build/app/outputs/flutter-apk/app-debug.apk
