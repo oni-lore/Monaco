@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:monaco/providers/auth_provider.dart';
@@ -221,8 +222,16 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       }
     } catch (e) {
       if (mounted) {
+        String message;
+        if (e is SocketException) {
+          message = 'Unable to connect to the server. Please check your internet connection and try again.';
+        } else if (e is TimeoutException) {
+          message = 'The request timed out. Please try again.';
+        } else {
+          message = e.toString();
+        }
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString())),
+          SnackBar(content: Text(message), backgroundColor: Theme.of(context).colorScheme.error),
         );
       }
     }

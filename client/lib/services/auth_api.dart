@@ -5,6 +5,7 @@ import '../utils/constants.dart';
 
 class AuthApiService {
   static const String baseUrl = ApiConstants.baseUrl;
+  static const Duration _requestTimeout = Duration(seconds: 10);
   final http.Client _client = http.Client();
 
   Future<AuthResponse> register({
@@ -24,7 +25,7 @@ class AuthApiService {
         if (phone != null) 'phone': phone,
         if (birthday != null) 'birthday': birthday.toIso8601String().split('T')[0],
       }),
-    );
+    ).timeout(_requestTimeout);
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body) as Map<String, dynamic>;
@@ -43,7 +44,7 @@ class AuthApiService {
       Uri.parse('$baseUrl/login'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({'username': username, 'password': password}),
-    );
+    ).timeout(_requestTimeout);
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body) as Map<String, dynamic>;
@@ -77,7 +78,7 @@ class AuthApiService {
         'current_password': currentPassword,
         'new_password': newPassword,
       }),
-    );
+    ).timeout(_requestTimeout);
 
     if (response.statusCode != 200) {
       final error = jsonDecode(response.body)['error'] as String? ?? 'Failed to change password';
@@ -96,7 +97,7 @@ class AuthApiService {
         'Authorization': 'Bearer $accessToken',
       },
       body: jsonEncode({'email': newEmail}),
-    );
+    ).timeout(_requestTimeout);
 
     if (response.statusCode != 200) {
       final error = jsonDecode(response.body)['error'] as String? ?? 'Failed to change email';
@@ -106,10 +107,10 @@ class AuthApiService {
 
   Future<void> requestPasswordReset({required String email}) async {
     final response = await _client.post(
-      Uri.parse('$baseUrl/auth/forgot-password'),
+      Uri.parse('$baseUrl/logout'),
       headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'email': email}),
-    );
+      body: jsonEncode({'refresh_token': refreshToken}),
+    ).timeout(_requestTimeout);
 
     if (response.statusCode != 200) {
       final error = jsonDecode(response.body)['error'] as String? ?? 'Failed to request password reset';
@@ -122,10 +123,10 @@ class AuthApiService {
     required String newPassword,
   }) async {
     final response = await _client.post(
-      Uri.parse('$baseUrl/auth/reset-password'),
+      Uri.parse('$baseUrl/auth/forgot-password'),
       headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'token': token, 'new_password': newPassword}),
-    );
+      body: jsonEncode({'email': email}),
+    ).timeout(_requestTimeout);
 
     if (response.statusCode != 200) {
       final error = jsonDecode(response.body)['error'] as String? ?? 'Failed to reset password';
@@ -141,7 +142,7 @@ class AuthApiService {
         'Authorization': 'Bearer $accessToken',
       },
       body: jsonEncode({'password': password}),
-    );
+    ).timeout(_requestTimeout);
 
     if (response.statusCode != 200) {
       final error = jsonDecode(response.body)['error'] as String? ?? 'Failed to delete account';
@@ -153,7 +154,7 @@ class AuthApiService {
     final response = await _client.get(
       Uri.parse('$baseUrl/auth/sessions'),
       headers: {'Authorization': 'Bearer $accessToken'},
-    );
+    ).timeout(_requestTimeout);
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body) as Map<String, dynamic>;
@@ -167,7 +168,7 @@ class AuthApiService {
     final response = await _client.delete(
       Uri.parse('$baseUrl/auth/sessions/$sessionId'),
       headers: {'Authorization': 'Bearer $accessToken'},
-    );
+    ).timeout(_requestTimeout);
 
     if (response.statusCode != 200) {
       throw Exception('Failed to revoke session');
@@ -178,7 +179,7 @@ class AuthApiService {
     final response = await _client.delete(
       Uri.parse('$baseUrl/auth/sessions'),
       headers: {'Authorization': 'Bearer $accessToken'},
-    );
+    ).timeout(_requestTimeout);
 
     if (response.statusCode != 200) {
       throw Exception('Failed to revoke other sessions');
