@@ -549,7 +549,6 @@ fastify.post('/auth/reset-password', async (req, res) => {
 });
 
 fastify.post('/auth/refresh', async (req, res) => {
-  const userId = req.user.sub;
   const { refresh_token } = req.body;
 
   if (!refresh_token) {
@@ -559,9 +558,9 @@ fastify.post('/auth/refresh', async (req, res) => {
   const tokenHash = crypto.createHash('sha256').update(refresh_token).digest('hex');
 
   const result = await pool.query(
-    `SELECT id, expires_at FROM refresh_tokens
-     WHERE user_id = $1 AND token_hash = $2`,
-    [userId, tokenHash]
+    `SELECT user_id, expires_at FROM refresh_tokens
+     WHERE token_hash = $1`,
+    [tokenHash]
   );
 
   if (result.rows.length === 0) {
@@ -569,6 +568,7 @@ fastify.post('/auth/refresh', async (req, res) => {
   }
 
   const tokenRow = result.rows[0];
+  const userId = tokenRow.user_id;
   if (new Date(tokenRow.expires_at) < new Date()) {
     return res.status(401).send({ error: 'Refresh token has expired' });
   }
@@ -581,7 +581,7 @@ fastify.post('/auth/refresh', async (req, res) => {
   const user = userResult.rows[0];
 
   // Rotate: delete old token, create new one
-  await pool.query('DELETE FROM refresh_tokens WHERE id = $1', [tokenRow.id]);
+  await pool.query('DELETE FROM refresh_tokens WHERE token_hash = $1', [tokenHash]);
 
   const newAccessToken = jwt.sign(
     { sub: user.id, username: user.username },

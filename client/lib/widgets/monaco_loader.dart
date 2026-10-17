@@ -142,7 +142,6 @@ class _MonacoLoaderState extends State<MonacoLoader>
               width: 200,
               height: 4,
               child: LinearProgressIndicator(
-                minWidth: 200,
                 backgroundColor: MonacoDesign.brandPrimary.withOpacity(0.15),
                 valueColor: AlwaysStoppedAnimation<Color>(MonacoDesign.brandPrimary),
               ),
@@ -203,11 +202,11 @@ class _MonacoLoaderState extends State<MonacoLoader>
               FilledButton.icon(
                 onPressed: widget.onRetry,
                 style: MonacoDesign.primaryButton(context).copyWith(
-                  backgroundColor: MaterialStateProperty.resolveWith<Color>(
-                    (states) => states.contains(MaterialState.disabled)
-                        ? MonacoDesign.error.withOpacity(0.6)
-                        : MonacoDesign.error,
-                  ),
+                backgroundColor: WidgetStateProperty.resolveWith<Color>(
+                  (states) => states.contains(WidgetState.disabled)
+                      ? MonacoDesign.error.withOpacity(0.6)
+                      : MonacoDesign.error,
+                ),
                 ),
                 icon: const Icon(Icons.refresh_rounded, size: 18),
                 label: const Text('Try again'),
