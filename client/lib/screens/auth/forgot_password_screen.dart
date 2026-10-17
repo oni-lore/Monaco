@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -130,7 +131,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                           decoration: MonacoDesign.inputDecoration(
                             context: context,
                             label: 'Email address',
-                            hintText: 'you@example.com',
+                            hint: 'you@example.com',
                             prefixIcon: Icons.email_outlined,
                           ),
                           keyboardType: TextInputType.emailAddress,

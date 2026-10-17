@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:monaco/providers/auth_provider.dart';
 import 'package:monaco/services/chat_api.dart';
-import 'package:monaco/models/user.dart';
 import 'package:monaco/utils/design_system.dart';
+import 'package:monaco/widgets/monaco_loader.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});

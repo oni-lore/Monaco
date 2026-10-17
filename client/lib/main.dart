@@ -64,6 +64,14 @@ class MonacoApp extends StatelessWidget {
             ),
           );
         }
+        if (settings.name == '/reset-password') {
+          final args = settings.arguments as Map<String, dynamic>;
+          return MaterialPageRoute(
+            builder: (_) => ResetPasswordScreen(
+              token: args['token'] as String,
+            ),
+          );
+        }
         return null;
       },
     ),
