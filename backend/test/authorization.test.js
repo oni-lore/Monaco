@@ -25,22 +25,23 @@ async function makeUser(name, password) {
 async function connect(requester, recipient, status) {
   await pool.query(
     `INSERT INTO connections (requester_id, recipient_id, status) VALUES ($1, $2, $3)`,
-    [requester, recipient, status]
+    [requester.id, recipient.id, status]
   );
 }
 async function makeConversation(creator) {
   const r = await pool.query(
-    `INSERT INTO direct_conversations (creator_id) VALUES ($1) RETURNING id`, [creator]
+    `INSERT INTO direct_conversations (creator_id) VALUES ($1) RETURNING id`, [creator.id]
   );
   return r.rows[0].id;
 }
 function addParticipant(conv, user) {
   return pool.query(
-    `INSERT INTO conversation_participants (conversation_id, user_id) VALUES ($1, $2)`, [conv, user]
+    `INSERT INTO conversation_participants (conversation_id, user_id) VALUES ($1, $2)`, [conv, user.id]
   );
 }
 function tokenFor(userId) {
-  return require('jsonwebtoken').sign({ sub: userId }, process.env.JWT_SECRET);
+  const id = typeof userId === 'object' && userId !== null ? userId.id : userId;
+  return require('jsonwebtoken').sign({ sub: id }, process.env.JWT_SECRET);
 }
 const auth = (userId) => ({ authorization: `Bearer ${tokenFor(userId)}` });
 
@@ -55,7 +56,7 @@ test('1. creator can participate in their own conversation', async () => {
   const creator = await makeUser('c1');
   const conv = await makeConversation(creator);
   await addParticipant(conv, creator); // must not throw
-  const r = await pool.query(`SELECT 1 FROM conversation_participants WHERE conversation_id=$1 AND user_id=$2`, [conv, creator]);
+  const r = await pool.query(`SELECT 1 FROM conversation_participants WHERE conversation_id=$1 AND user_id=$2`, [conv, creator.id]);
   assert.equal(r.rowCount, 1);
 });
 
@@ -89,10 +90,10 @@ test('4. API refuses to create a conversation with an unconnected user', async (
   const stranger = await makeUser('s4');
   const res = await app.inject({
     method: 'POST', url: '/conversations', headers: auth(creator),
-    payload: { targetUserId: stranger },
+    payload: { targetUserId: stranger.id },
   });
   assert.equal(res.statusCode, 403);
-  const r = await pool.query(`SELECT count(*)::int AS n FROM direct_conversations WHERE creator_id=$1`, [creator]);
+  const r = await pool.query(`SELECT count(*)::int AS n FROM direct_conversations WHERE creator_id=$1`, [creator.id]);
   assert.equal(r.rows[0].n, 0);
 });
 
