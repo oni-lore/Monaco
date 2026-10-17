@@ -20,6 +20,7 @@ class MonacoApp extends StatelessWidget {
     create: (BuildContext _) => AuthProvider(),
     child: MaterialApp(
       title: 'Monaco',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
         primarySwatch: Colors.indigo,
         useMaterial3: true,
