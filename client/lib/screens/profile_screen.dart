@@ -213,7 +213,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     final auth = context.watch<AuthProvider>();
     final user = auth.user;
-    final colors = Theme.of(context).colorScheme;
 
     return Scaffold(
       backgroundColor: MonacoDesign.brandSurface,
