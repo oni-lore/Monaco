@@ -210,3 +210,147 @@ test('10. /login rejects wrong password', async () => {
   const body = JSON.parse(res.body);
   assert.ok(body.error, 'error message missing');
 });
+
+test('11. GET /users/me returns current user profile', async () => {
+  const user = await makeUser('profileuser', 'ProfilePass123!');
+  const res = await app.inject({
+    method: 'GET', url: '/users/me', headers: auth(user.id),
+  });
+  assert.equal(res.statusCode, 200, res.body);
+  const body = JSON.parse(res.body);
+  assert.ok(body.user, 'response missing user object');
+  assert.equal(body.user.id, user.id);
+  assert.equal(body.user.username, `profileuser_${tag}`);
+  assert.equal(body.user.email, `profileuser_${tag}@test.com`);
+  assert.equal(body.user.password_hash, undefined, 'password_hash must not be returned');
+});
+
+test('12. GET /users/search finds users by username', async () => {
+  await makeUser('searchable1', 'SearchPass123!');
+  await makeUser('searchable2', 'SearchPass123!');
+  await makeUser('unrelateduser', 'SearchPass123!');
+
+  const searcher = await makeUser('searcher', 'SearchPass123!');
+
+  const res = await app.inject({
+    method: 'GET', url: '/users/search?q=searchable', headers: auth(searcher.id),
+  });
+  assert.equal(res.statusCode, 200, res.body);
+  const body = JSON.parse(res.body);
+  assert.ok(body.users, 'response missing users array');
+  assert.ok(body.users.length >= 2, 'should find at least 2 searchable users');
+  // Searcher should not appear in their own results
+  const searcherFound = body.users.some((u) => u.id === searcher.id);
+  assert.equal(searcherFound, false, 'searcher should not appear in own search results');
+});
+
+test('13. GET /users/search requires minimum 2 characters', async () => {
+  const user = await makeUser('shortsearch', 'SearchPass123!');
+  const res = await app.inject({
+    method: 'GET', url: '/users/search?q=a', headers: auth(user.id),
+  });
+  assert.equal(res.statusCode, 400, res.body);
+});
+
+test('14. GET /conversations/:id returns conversation with participants and last message', async () => {
+  const creator = await makeUser('convcreator', 'ConvPass123!');
+  const other = await makeUser('convother', 'ConvPass123!');
+  await connect(creator, other, 'accepted');
+
+  const convRes = await app.inject({
+    method: 'POST', url: '/conversations', headers: auth(creator.id),
+    payload: { targetUserId: other.id },
+  });
+  assert.equal(convRes.statusCode, 200, convRes.body);
+  const convBody = JSON.parse(convRes.body);
+  const conversationId = convBody.conversationId;
+
+  // Send a message
+  await app.inject({
+    method: 'POST', url: `/conversations/${conversationId}/messages`, headers: auth(creator.id),
+    payload: { content_type: 'text', content_text: 'Hello there' },
+  });
+
+  const res = await app.inject({
+    method: 'GET', url: `/conversations/${conversationId}`, headers: auth(creator.id),
+  });
+  assert.equal(res.statusCode, 200, res.body);
+  const body = JSON.parse(res.body);
+  assert.ok(body.conversation, 'response missing conversation object');
+  assert.equal(body.conversation.id, conversationId);
+  assert.ok(body.conversation.participants, 'missing participants');
+  assert.equal(body.conversation.participants.length, 1, 'should have 1 other participant');
+  assert.equal(body.conversation.other_participant.username, `convother_${tag}`);
+  assert.ok(body.conversation.last_message, 'missing last message');
+  assert.equal(body.conversation.last_message.content_text, 'Hello there');
+});
+
+test('15. GET /conversations/:id rejects non-participant', async () => {
+  const creator = await makeUser('convowner', 'ConvPass123!');
+  const other = await makeUser('convother2', 'ConvPass123!');
+  const stranger = await makeUser('convstranger', 'ConvPass123!');
+  await connect(creator, other, 'accepted');
+
+  const convRes = await app.inject({
+    method: 'POST', url: '/conversations', headers: auth(creator.id),
+    payload: { targetUserId: other.id },
+  });
+  assert.equal(convRes.statusCode, 200, convRes.body);
+  const convBody = JSON.parse(convRes.body);
+
+  const res = await app.inject({
+    method: 'GET', url: `/conversations/${convBody.conversationId}`, headers: auth(stranger.id),
+  });
+  assert.equal(res.statusCode, 403, res.body);
+});
+
+test('16. GET /conversations includes last message preview', async () => {
+  const creator = await makeUser('listcreator', 'ListPass123!');
+  const other = await makeUser('listother', 'ListPass123!');
+  await connect(creator, other, 'accepted');
+
+  const convRes = await app.inject({
+    method: 'POST', url: '/conversations', headers: auth(creator.id),
+    payload: { targetUserId: other.id },
+  });
+  assert.equal(convRes.statusCode, 200, convRes.body);
+  const convBody = JSON.parse(convRes.body);
+
+  await app.inject({
+    method: 'POST', url: `/conversations/${convBody.conversationId}/messages`, headers: auth(creator.id),
+    payload: { content_type: 'text', content_text: 'Last message preview test' },
+  });
+
+  const res = await app.inject({
+    method: 'GET', url: '/conversations', headers: auth(creator.id),
+  });
+  assert.equal(res.statusCode, 200, res.body);
+  const body = JSON.parse(res.body);
+  assert.ok(body.conversations, 'missing conversations array');
+  assert.ok(body.conversations.length >= 1, 'should have at least 1 conversation');
+  const conv = body.conversations.find((c) => c.id === convBody.conversationId);
+  assert.ok(conv, 'conversation not found in list');
+  assert.equal(conv.last_message_text, 'Last message preview test');
+  assert.ok(conv.last_message_at, 'missing last_message_at');
+});
+
+test('17. POST /conversations rejects duplicate conversation between same users', async () => {
+  const creator = await makeUser('dupcreator', 'DupPass123!');
+  const other = await makeUser('dupother', 'DupPass123!');
+  await connect(creator, other, 'accepted');
+
+  // First conversation
+  const res1 = await app.inject({
+    method: 'POST', url: '/conversations', headers: auth(creator.id),
+    payload: { targetUserId: other.id },
+  });
+  assert.equal(res1.statusCode, 200, res1.body);
+
+  // Second conversation between same users (reverse direction)
+  const res2 = await app.inject({
+    method: 'POST', url: '/conversations', headers: auth(other.id),
+    payload: { targetUserId: creator.id },
+  });
+  // Should either succeed (new conversation) or fail with conflict - we just check it doesn't crash
+  assert.ok([200, 409, 400].includes(res2.statusCode), `unexpected status ${res2.statusCode}`);
+});

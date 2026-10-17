@@ -174,13 +174,119 @@ fastify.post('/conversations', { preHandler: verifyToken }, async (req, res) => 
   });
 });
 
+fastify.get('/users/me', { preHandler: verifyToken }, async (req, res) => {
+  const userId = req.user.sub;
+  const result = await pool.query(
+    'SELECT id, username, email, email_verified, birthday, profile_picture_url, current_monarch_id, is_creator, created_at FROM users WHERE id = $1',
+    [userId]
+  );
+  if (result.rows.length === 0) {
+    return res.status(404).send({ error: 'User not found' });
+  }
+  res.send({ user: result.rows[0] });
+});
+
+fastify.get('/users/search', { preHandler: verifyToken }, async (req, res) => {
+  const { q } = req.query;
+  const userId = req.user.sub;
+
+  if (!q || q.trim().length < 2) {
+    return res.status(400).send({ error: 'Search query must be at least 2 characters' });
+  }
+
+  const searchPattern = `%${q.trim()}%`;
+  const result = await pool.query(
+    `SELECT id, username, email, email_verified, is_creator, created_at
+     FROM users
+     WHERE username ILIKE $1 AND id != $2
+     ORDER BY username ASC
+     LIMIT 20`,
+    [searchPattern, userId]
+  );
+
+  res.send({ users: result.rows });
+});
+
+fastify.get('/conversations/:conversationId', { preHandler: verifyToken }, async (req, res) => {
+  const conversationId = req.params.conversationId;
+  const userId = req.user.sub;
+
+  // Verify participant access
+  const participantCheck = await pool.query(
+    'SELECT 1 FROM conversation_participants WHERE conversation_id = $1 AND user_id = $2',
+    [conversationId, userId]
+  );
+
+  if (participantCheck.rows.length === 0) {
+    return res.status(403).send({ error: 'Not a participant in this conversation' });
+  }
+
+  // Get conversation details
+  const convResult = await pool.query(
+    'SELECT id, name, created_at FROM direct_conversations WHERE id = $1',
+    [conversationId]
+  );
+  if (convResult.rows.length === 0) {
+    return res.status(404).send({ error: 'Conversation not found' });
+  }
+
+  // Get participants (excluding current user)
+  const participantsResult = await pool.query(
+    `SELECT u.id, u.username, u.email
+     FROM conversation_participants cp
+     JOIN users u ON cp.user_id = u.id
+     WHERE cp.conversation_id = $1 AND cp.user_id != $2`,
+    [conversationId, userId]
+  );
+
+  // Get last message
+  const lastMsgResult = await pool.query(
+    `SELECT m.id, m.content_text, m.created_at, m.sender_id, u.username as sender_username
+     FROM messages m
+     JOIN users u ON m.sender_id = u.id
+     WHERE m.conversation_id = $1 AND m.deletion_state = 'active'
+     ORDER BY m.created_at DESC
+     LIMIT 1`,
+    [conversationId]
+  );
+
+  const conversation = convResult.rows[0];
+  conversation.participants = participantsResult.rows;
+  conversation.last_message = lastMsgResult.rows[0] ?? null;
+  conversation.other_participant = participantsResult.rows.length === 1 ? participantsResult.rows[0] : null;
+
+  res.send({ conversation });
+});
+
 fastify.get('/conversations', { preHandler: verifyToken }, async (req, res) => {
   const userId = req.user.sub;
   const result = await pool.query(
-    `SELECT dc.id, dc.name, dc.created_at
+    `SELECT dc.id, dc.name, dc.created_at,
+            cp.joined_at,
+            (SELECT m.content_text
+             FROM messages m
+             WHERE m.conversation_id = dc.id AND m.deletion_state = 'active'
+             ORDER BY m.created_at DESC
+             LIMIT 1) as last_message_text,
+            (SELECT m.created_at
+             FROM messages m
+             WHERE m.conversation_id = dc.id AND m.deletion_state = 'active'
+             ORDER BY m.created_at DESC
+             LIMIT 1) as last_message_at,
+            (SELECT u.username
+             FROM messages m
+             JOIN users u ON m.sender_id = u.id
+             WHERE m.conversation_id = dc.id AND m.deletion_state = 'active'
+             ORDER BY m.created_at DESC
+             LIMIT 1) as last_message_sender
      FROM direct_conversations dc
      JOIN conversation_participants cp ON dc.id = cp.conversation_id
-     WHERE cp.user_id = $1`,
+     WHERE cp.user_id = $1
+     ORDER BY COALESCE((SELECT m.created_at
+                        FROM messages m
+                        WHERE m.conversation_id = dc.id AND m.deletion_state = 'active'
+                        ORDER BY m.created_at DESC
+                        LIMIT 1), dc.created_at) DESC`,
     [req.user.sub]
   );
   res.send({ conversations: result.rows });
