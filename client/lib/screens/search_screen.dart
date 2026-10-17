@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:monaco/providers/auth_provider.dart';
 import 'package:monaco/services/chat_api.dart';
-import 'package:monaco/screens/conversation_screen.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -104,8 +103,7 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   Widget _buildUserResult(Map<String, dynamic> user) {
-    final isCreating = _isCreating;
-    return ListTile(
+      return ListTile(
       leading: CircleAvatar(
         backgroundColor: Theme.of(context).colorScheme.primaryContainer,
         child: Text(
@@ -185,7 +183,7 @@ class _SearchScreenState extends State<SearchScreen> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 filled: true,
-                fillColor: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                fillColor: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
               ),
             ),
           ),

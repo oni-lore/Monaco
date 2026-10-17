@@ -11,26 +11,10 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   bool _isLoggingOut = false;
-  ThemeMode _themeMode = ThemeMode.system;
 
   @override
   void initState() {
     super.initState();
-    _loadThemeMode();
-  }
-
-  Future<void> _loadThemeMode() async {
-    // Theme mode is stored in SharedPreferences in a real implementation
-    // For now, default to system
-    setState(() {
-      _themeMode = ThemeMode.system;
-    });
-  }
-
-  Future<void> _saveThemeMode(ThemeMode mode) async {
-    setState(() {
-      _themeMode = mode;
-    });
   }
 
   Future<void> _logout() async {
@@ -79,7 +63,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           // Profile header
           Container(
             padding: const EdgeInsets.all(24),
-            color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.3),
+            color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3),
             child: Column(
               children: [
                 CircleAvatar(
@@ -115,7 +99,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: Colors.green.withValues(alpha: 0.2),
+                      color: Colors.green.withOpacity(0.2),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Row(

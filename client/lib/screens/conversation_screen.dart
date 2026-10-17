@@ -1,11 +1,9 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:intl/intl.dart';
 import 'package:monaco/providers/auth_provider.dart';
 import 'package:monaco/services/chat_api.dart';
 import 'package:monaco/models/message.dart';
-import 'package:monaco/models/conversation.dart';
 
 class ConversationScreen extends StatefulWidget {
   final String conversationId;
@@ -195,7 +193,7 @@ class _ConversationScreenState extends State<ConversationScreen> {
             Text(
               message.timeString,
               style: TextStyle(
-                color: textColor.withValues(alpha: 0.6),
+                color: textColor.withOpacity(0.6),
                 fontSize: 10,
               ),
             ),

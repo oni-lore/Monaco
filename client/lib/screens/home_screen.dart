@@ -2,11 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:monaco/providers/auth_provider.dart';
 import 'package:monaco/services/chat_api.dart';
-import 'package:monaco/models/conversation.dart';
+import 'package:monaco/models/message.dart';
 import 'package:monaco/screens/conversation_screen.dart';
 import 'package:monaco/screens/search_screen.dart';
 import 'package:monaco/screens/profile_screen.dart';
-import 'package:monaco/utils/constants.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -129,17 +128,6 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  String _dateLabel(dynamic value) {
-    if (value == null) return '';
-    final date = DateTime.tryParse(value.toString())?.toLocal();
-    if (date == null) return '';
-    final now = DateTime.now();
-    if (date.year == now.year && date.month == now.month && date.day == now.day) {
-      return '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
-    }
-    return '${date.day}/${date.month}/${date.year}';
-  }
-
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
@@ -202,7 +190,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                     decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.55),
+                      color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.55),
                       borderRadius: BorderRadius.circular(18),
                     ),
                     child: Row(
@@ -260,7 +248,6 @@ class _HomeScreenState extends State<HomeScreen> {
                     )
                   else
                     ..._filteredConversations.map((conversation) {
-                      final other = conversation.otherParticipant;
                       final hasLastMessage = conversation.hasLastMessage;
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 10),
@@ -289,7 +276,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
-                            subtitle: hasLastMessage
+                            subtitle: hasLastMessage && conversation.lastMessagePreview.isNotEmpty
                                 ? Text(
                               conversation.lastMessagePreview,
                               style: TextStyle(
@@ -302,7 +289,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 : Text(
                               'No messages yet',
                               style: TextStyle(
-                                color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+                                color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.6),
                                 fontSize: 13,
                               ),
                             ),
@@ -374,7 +361,7 @@ class _StatusPanel extends StatelessWidget {
       decoration: BoxDecoration(
         color: colors.surfaceContainerLow,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: colors.outlineVariant.withValues(alpha: 0.5)),
+        border: Border.all(color: colors.outlineVariant.withOpacity(0.5)),
       ),
       child: Column(
         children: [

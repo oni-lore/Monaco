@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/message.dart';
-import '../models/conversation.dart';
 import '../models/user.dart';
 import '../utils/constants.dart';
 
@@ -21,8 +20,8 @@ class ChatApiService {
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body) as Map<String, dynamic>;
-      final items = (data['conversations'] as List? ?? []) as List;
-      return items.map((e) => Conversation.fromJson(Map<String, dynamic>.from(e))).toList();
+      final items = (data['conversations'] as List? ?? []);
+      return items.map((e) => Conversation.fromJson(e as Map<String, dynamic>)).toList();
     } else {
       final error = jsonDecode(response.body)['error'] as String? ?? 'Failed to load conversations';
       throw Exception(error);
@@ -77,8 +76,8 @@ class ChatApiService {
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body) as Map<String, dynamic>;
-      final items = (data['messages'] as List? ?? []) as List;
-      return items.map((e) => Message.fromJson(Map<String, dynamic>.from(e))).toList();
+      final items = (data['messages'] as List? ?? []);
+      return items.map((e) => Message.fromJson(e as Map<String, dynamic>)).toList();
     } else if (response.statusCode == 403) {
       throw Exception('You are not a participant in this conversation');
     } else {
@@ -143,8 +142,8 @@ class ChatApiService {
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body) as Map<String, dynamic>;
-      final items = (data['users'] as List? ?? []) as List;
-      return items.map((e) => Map<String, dynamic>.from(e)).toList();
+      final items = (data['users'] as List? ?? []);
+      return items.map((e) => e as Map<String, dynamic>).toList();
     } else if (response.statusCode == 400) {
       final error = jsonDecode(response.body)['error'] as String? ?? 'Invalid search query';
       throw Exception(error);
