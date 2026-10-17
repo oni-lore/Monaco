@@ -147,6 +147,15 @@ test('7. /register returns user and tokens matching client AuthResponse model', 
   const dbUser = await pool.query('SELECT id, username, email FROM users WHERE id = $1', [body.user.id]);
   assert.equal(dbUser.rows.length, 1);
   assert.equal(dbUser.rows[0].username, `reguser_${tag}`);
+  // Verify refresh token is stored as SHA-256 hash, not plaintext
+  const rt = await pool.query(
+    'SELECT token_hash FROM refresh_tokens WHERE user_id = $1',
+    [body.user.id]
+  );
+  assert.equal(rt.rowCount, 1, 'refresh token not stored in database');
+  const expectedHash = crypto.createHash('sha256').update(body.tokens.refresh_token).digest('hex');
+  assert.equal(rt.rows[0].token_hash, expectedHash, 'token_hash must be SHA-256 hash of refresh_token');
+  assert.notEqual(rt.rows[0].token_hash, body.tokens.refresh_token, 'plaintext refresh_token must not be stored');
 });
 
 test('8. /login returns user and tokens matching client AuthResponse model', async () => {
@@ -165,9 +174,15 @@ test('8. /login returns user and tokens matching client AuthResponse model', asy
   assert.ok(body.user.email, 'user.email missing');
   assert.ok(body.tokens.access_token, 'tokens.access_token missing');
   assert.ok(body.tokens.refresh_token, 'tokens.refresh_token missing');
-  // Verify refresh token was stored in DB
-  const rt = await pool.query('SELECT 1 FROM refresh_tokens WHERE user_id = $1', [body.user.id]);
+  // Verify refresh token is stored as SHA-256 hash, not plaintext
+  const rt = await pool.query(
+    'SELECT token_hash FROM refresh_tokens WHERE user_id = $1',
+    [body.user.id]
+  );
   assert.equal(rt.rowCount, 1, 'refresh token not stored in database');
+  const expectedHash = crypto.createHash('sha256').update(body.tokens.refresh_token).digest('hex');
+  assert.equal(rt.rows[0].token_hash, expectedHash, 'token_hash must be SHA-256 hash of refresh_token');
+  assert.notEqual(rt.rows[0].token_hash, body.tokens.refresh_token, 'plaintext refresh_token must not be stored');
 });
 
 test('9. /register rejects duplicate username', async () => {

@@ -50,11 +50,12 @@ fastify.post('/register', async (req, res) => {
       { expiresIn: '7d' }
     );
     const refreshToken = crypto.randomBytes(32).toString('hex');
+    const refreshTokenHash = crypto.createHash('sha256').update(refreshToken).digest('hex');
     const refreshTokenExpiry = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
 
     await pool.query(
       'INSERT INTO refresh_tokens (user_id, token_hash, expires_at) VALUES ($1, $2, $3)',
-      [user.id, refreshToken, refreshTokenExpiry]
+      [user.id, refreshTokenHash, refreshTokenExpiry]
     );
 
     res.send({
@@ -101,11 +102,12 @@ fastify.post('/login', async (req, res) => {
     { expiresIn: '7d' }
   );
   const refreshToken = crypto.randomBytes(32).toString('hex');
+  const refreshTokenHash = crypto.createHash('sha256').update(refreshToken).digest('hex');
   const refreshTokenExpiry = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
 
   await pool.query(
     'INSERT INTO refresh_tokens (user_id, token_hash, expires_at) VALUES ($1, $2, $3)',
-    [user.id, refreshToken, refreshTokenExpiry]
+    [user.id, refreshTokenHash, refreshTokenExpiry]
   );
 
   res.send({
