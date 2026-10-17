@@ -1,7 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:monaco/models/message.dart';
-import 'package:monaco/models/conversation.dart';
-import 'package:monaco/models/user.dart';
 
 void main() {
   group('User model', () {

@@ -90,7 +90,8 @@ class Conversation {
   final Map<String, dynamic>? otherParticipant;
 
   String get displayName {
-    if (name != null && name.isNotEmpty) return name!;
+    final n = name;
+    if (n != null && n.isNotEmpty) return n;
     if (otherParticipant != null) {
       return otherParticipant!['username'] as String? ?? 'Unknown';
     }

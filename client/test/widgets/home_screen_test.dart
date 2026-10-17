@@ -1,11 +1,11 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:monaco/models/message.dart';
+import 'package:flutter/material.dart';
 
 void main() {
   group('HomeScreen widget test', () {
     testWidgets('renders without crashing', (WidgetTester tester) async {
       await tester.pumpWidget(
-        MaterialApp(home: const Text('Loading')),
+        const MaterialApp(home: Text('Loading')),
       );
 
       expect(find.byType(Text), findsOneWidget);

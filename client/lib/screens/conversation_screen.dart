@@ -181,7 +181,7 @@ class _ConversationScreenState extends State<ConversationScreen> {
                     Text(
                       'Edited',
                       style: TextStyle(
-                        color: textColor.withValues(alpha: 0.7),
+                        color: textColor.withOpacity(0.7),
                         fontSize: 10,
                         fontStyle: FontStyle.italic,
                       ),
@@ -285,7 +285,7 @@ class _ConversationScreenState extends State<ConversationScreen> {
                   borderSide: BorderSide.none,
                 ),
                 filled: true,
-                fillColor: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                fillColor: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               ),
             ),
