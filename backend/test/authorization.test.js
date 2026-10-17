@@ -397,7 +397,7 @@ test('20. PUT /users/me rejects invalid username', async () => {
 
 test('21. PUT /users/me rejects duplicate email', async () => {
   const user1 = await makeUser('dupemail1', 'Pass123!');
-  const user2 = await makeUser('dupemail2', 'Pass123!');
+  await makeUser('dupemail2', 'Pass123!');
   const res = await app.inject({
     method: 'PUT', url: '/users/me', headers: auth(user1.id),
     payload: { email: `dupemail2_${tag}@test.com` },
@@ -468,7 +468,7 @@ test('24. POST /auth/reset-password rejects invalid token', async () => {
 });
 
 test('25. POST /auth/refresh rotates access and refresh tokens', async () => {
-  const user = await makeUser('refreshuser', 'RefreshPass123!');
+  await makeUser('refreshuser', 'RefreshPass123!');
 
   // Login to get tokens
   const loginRes = await app.inject({

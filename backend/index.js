@@ -2,7 +2,6 @@ require('dotenv').config();
 const crypto = require('crypto');
 
 const fastify = require('fastify')({ logger: true });
-const pg = require('pg');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { Pool } = require('pg');
@@ -19,7 +18,7 @@ async function verifyToken(req, res) {
     }
     const token = authorization.substring(7);
     req.user = jwt.verify(token, process.env.JWT_SECRET);
-  } catch (err) {
+  } catch {
     return res.status(401).send({ error: 'Invalid or expired token' });
   }
 }
@@ -190,7 +189,7 @@ fastify.put('/users/me', { preHandler: verifyToken }, async (req, res) => {
   const userId = req.user.sub;
   const { username, email } = req.body;
 
-  if (username == null && email == null) {
+  if ((username === null || username === undefined) && (email === null || email === undefined)) {
     return res.status(400).send({ error: 'At least one field (username or email) is required' });
   }
 
@@ -204,7 +203,7 @@ fastify.put('/users/me', { preHandler: verifyToken }, async (req, res) => {
   const values = [];
   let paramIdx = 1;
 
-  if (username != null && username !== currentUser.username) {
+  if (username !== null && username !== undefined && username !== currentUser.username) {
     if (!username || username.length < 3) {
       return res.status(400).send({ error: 'Username must be at least 3 characters' });
     }
@@ -215,7 +214,7 @@ fastify.put('/users/me', { preHandler: verifyToken }, async (req, res) => {
     values.push(username);
   }
 
-  if (email != null && email !== currentUser.email) {
+  if (email !== null && email !== undefined && email !== currentUser.email) {
     if (!email) {
       return res.status(400).send({ error: 'Email is required' });
     }
@@ -325,7 +324,6 @@ fastify.get('/conversations/:conversationId', { preHandler: verifyToken }, async
 });
 
 fastify.get('/conversations', { preHandler: verifyToken }, async (req, res) => {
-  const userId = req.user.sub;
   const result = await pool.query(
     `SELECT dc.id, dc.name, dc.created_at,
             cp.joined_at,
@@ -359,8 +357,6 @@ fastify.get('/conversations', { preHandler: verifyToken }, async (req, res) => {
 });
 
 fastify.get('/conversations/:conversationId/messages', { preHandler: verifyToken }, async (req, res) => {
-  const conversationId = req.params.conversationId;
-  const userId = req.user.sub;
 
   const participantCheck = await pool.query(
     'SELECT 1 FROM conversation_participants WHERE conversation_id = $1 AND user_id = $2',
@@ -386,9 +382,7 @@ fastify.get('/conversations/:conversationId/messages', { preHandler: verifyToken
 });
 
 fastify.post('/conversations/:conversationId/messages', { preHandler: verifyToken }, async (req, res) => {
-  const conversationId = req.params.conversationId;
-  const userId = req.user.sub;
-  const { content_type, content_text } = req.body;
+  const { content_type } = req.body;
 
   if (!content_type) {
     return res.status(400).send({ error: 'content_type required' });
