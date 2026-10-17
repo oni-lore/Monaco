@@ -49,7 +49,6 @@ class MonacoApp extends StatelessWidget {
         '/login': (_) => const LoginScreen(),
         '/register': (_) => const RegistrationScreen(),
         '/forgot-password': (_) => const ForgotPasswordScreen(),
-        '/reset-password': (_) => const ResetPasswordScreen(),
         '/home': (_) => const HomeScreen(),
         '/search': (_) => const SearchScreen(),
         '/profile': (_) => const ProfileScreen(),

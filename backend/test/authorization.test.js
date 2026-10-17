@@ -366,7 +366,7 @@ test('18. PUT /users/me updates username', async () => {
   assert.ok(body.user, 'response missing user object');
   assert.equal(body.user.id, user.id);
   assert.equal(body.user.username, `updated_${tag}`);
-  assert.equal(body.user.email, `${user.username}_${tag}@test.com`);
+  assert.equal(body.user.email, user.email);
 
   // Verify the change persisted
   const dbUser = await pool.query('SELECT username FROM users WHERE id = $1', [user.id]);
@@ -383,7 +383,7 @@ test('19. PUT /users/me updates email', async () => {
   const body = JSON.parse(res.body);
   assert.ok(body.user, 'response missing user object');
   assert.equal(body.user.email, `newemail_${tag}@example.com`);
-  assert.equal(body.user.emailVerified, false, 'email should be unverified after change');
+  assert.equal(body.user.email_verified, false, 'email should be unverified after change');
 });
 
 test('20. PUT /users/me rejects invalid username', async () => {

@@ -10,12 +10,12 @@ class MonacoDesign {
   static const Color brandCard = Color(0xFFFFFFFF);
   static const Color brandTextPrimary = Color(0xFF0F172A);   // slate-900
   static const Color brandTextSecondary = Color(0xFF64748B); // slate-500
-  static const Color brandAccent = Color(0xFF06B6D4);        #cyan-500
+  static const Color brandAccent = Color(0xFF06B6D4);        // cyan-500
 
   // ── Semantic colors ────────────────────────────────────────────────────
-  static const Color success = Color(0xFF10B981); # emerald-500
-  static const Color warning = Color(0xFFF59E0B); # amber-500
-  static const Color error = Color(0xFFEF4444);   # red-500
+  static const Color success = Color(0xFF10B981); // emerald-500
+  static const Color warning = Color(0xFFF59E0B); // amber-500
+  static const Color error = Color(0xFFEF4444);   // red-500
 
   // ── Spacing ────────────────────────────────────────────────────────────
   static const double xs = 4;

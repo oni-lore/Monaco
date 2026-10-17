@@ -548,7 +548,7 @@ fastify.post('/auth/reset-password', async (req, res) => {
   res.send({ success: true, message: 'Password reset successfully' });
 });
 
-fastify.post('/auth/refresh', { preHandler: verifyToken }, async (req, res) => {
+fastify.post('/auth/refresh', async (req, res) => {
   const userId = req.user.sub;
   const { refresh_token } = req.body;
 
