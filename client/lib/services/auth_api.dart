@@ -186,6 +186,29 @@ class AuthApiService {
     }
   }
 
+  Future<Map<String, String>> refreshAccessToken({
+    required String refreshToken,
+  }) async {
+    final response = await _client.post(
+      Uri.parse('$baseUrl/auth/refresh'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'refresh_token': refreshToken}),
+    ).timeout(_requestTimeout);
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      return {
+        'access_token': data['access_token'] as String,
+        'refresh_token': data['refresh_token'] as String,
+      };
+    } else if (response.statusCode == 401) {
+      throw Exception('Session expired. Please log in again.');
+    } else {
+      final error = jsonDecode(response.body)['error'] as String? ?? 'Failed to refresh token';
+      throw Exception(error);
+    }
+  }
+
   void dispose() => _client.close();
 }
 

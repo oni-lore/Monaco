@@ -354,3 +354,146 @@ test('17. POST /conversations rejects duplicate conversation between same users'
   // Should either succeed (new conversation) or fail with conflict - we just check it doesn't crash
   assert.ok([200, 409, 400].includes(res2.statusCode), `unexpected status ${res2.statusCode}`);
 });
+
+test('18. PUT /users/me updates username', async () => {
+  const user = await makeUser('updateuser', 'UpdatePass123!');
+  const res = await app.inject({
+    method: 'PUT', url: '/users/me', headers: auth(user.id),
+    payload: { username: `updated_${tag}` },
+  });
+  assert.equal(res.statusCode, 200, res.body);
+  const body = JSON.parse(res.body);
+  assert.ok(body.user, 'response missing user object');
+  assert.equal(body.user.id, user.id);
+  assert.equal(body.user.username, `updated_${tag}`);
+  assert.equal(body.user.email, `${user.username}_${tag}@test.com`);
+
+  // Verify the change persisted
+  const dbUser = await pool.query('SELECT username FROM users WHERE id = $1', [user.id]);
+  assert.equal(dbUser.rows[0].username, `updated_${tag}`);
+});
+
+test('19. PUT /users/me updates email', async () => {
+  const user = await makeUser('emailuser', 'EmailPass123!');
+  const res = await app.inject({
+    method: 'PUT', url: '/users/me', headers: auth(user.id),
+    payload: { email: `newemail_${tag}@example.com` },
+  });
+  assert.equal(res.statusCode, 200, res.body);
+  const body = JSON.parse(res.body);
+  assert.ok(body.user, 'response missing user object');
+  assert.equal(body.user.email, `newemail_${tag}@example.com`);
+  assert.equal(body.user.emailVerified, false, 'email should be unverified after change');
+});
+
+test('20. PUT /users/me rejects invalid username', async () => {
+  const user = await makeUser('invaliduser', 'InvalidPass123!');
+  const res = await app.inject({
+    method: 'PUT', url: '/users/me', headers: auth(user.id),
+    payload: { username: 'ab' },
+  });
+  assert.equal(res.statusCode, 400, res.body);
+});
+
+test('21. PUT /users/me rejects duplicate email', async () => {
+  const user1 = await makeUser('dupemail1', 'Pass123!');
+  const user2 = await makeUser('dupemail2', 'Pass123!');
+  const res = await app.inject({
+    method: 'PUT', url: '/users/me', headers: auth(user1.id),
+    payload: { email: `dupemail2_${tag}@test.com` },
+  });
+  assert.equal(res.statusCode, 409, res.body);
+});
+
+test('22. POST /auth/forgot-password returns success for existing and non-existing email', async () => {
+  await makeUser('forgotuser', 'ForgotPass123!');
+
+  // Existing email
+  const res1 = await app.inject({
+    method: 'POST', url: '/auth/forgot-password',
+    payload: { email: `forgotuser_${tag}@test.com` },
+  });
+  assert.equal(res1.statusCode, 200, res1.body);
+
+  // Non-existing email (should still return success to prevent enumeration)
+  const res2 = await app.inject({
+    method: 'POST', url: '/auth/forgot-password',
+    payload: { email: `nonexistent_${tag}@example.com` },
+  });
+  assert.equal(res2.statusCode, 200, res2.body);
+});
+
+test('23. POST /auth/reset-password resets password with valid token', async () => {
+  const user = await makeUser('resetuser', 'ResetPass123!');
+  const resetToken = crypto.randomBytes(32).toString('hex');
+  const resetTokenHash = crypto.createHash('sha256').update(resetToken).digest('hex');
+  const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
+
+  await pool.query(
+    'INSERT INTO password_reset_tokens (user_id, token_hash, expires_at) VALUES ($1, $2, $3)',
+    [user.id, resetTokenHash, expiresAt]
+  );
+
+  const res = await app.inject({
+    method: 'POST', url: '/auth/reset-password',
+    payload: { token: resetToken, new_password: 'NewResetPass123!' },
+  });
+  assert.equal(res.statusCode, 200, res.body);
+
+  // Verify the token was marked as used
+  const rt = await pool.query('SELECT used_at FROM password_reset_tokens WHERE token_hash = $1', [resetTokenHash]);
+  assert.ok(rt.rows[0].used_at, 'reset token should be marked as used');
+
+  // Verify the new password works
+  const loginRes = await app.inject({
+    method: 'POST', url: '/login',
+    payload: { username: `resetuser_${tag}`, password: 'NewResetPass123!' },
+  });
+  assert.equal(loginRes.statusCode, 200, loginRes.body);
+
+  // Verify old password no longer works
+  const oldLoginRes = await app.inject({
+    method: 'POST', url: '/login',
+    payload: { username: `resetuser_${tag}`, password: 'ResetPass123!' },
+  });
+  assert.equal(oldLoginRes.statusCode, 401, oldLoginRes.body);
+});
+
+test('24. POST /auth/reset-password rejects invalid token', async () => {
+  const res = await app.inject({
+    method: 'POST', url: '/auth/reset-password',
+    payload: { token: 'invalid-token', new_password: 'NewPass123!' },
+  });
+  assert.equal(res.statusCode, 400, res.body);
+});
+
+test('25. POST /auth/refresh rotates access and refresh tokens', async () => {
+  const user = await makeUser('refreshuser', 'RefreshPass123!');
+
+  // Login to get tokens
+  const loginRes = await app.inject({
+    method: 'POST', url: '/login',
+    payload: { username: `refreshuser_${tag}`, password: 'RefreshPass123!' },
+  });
+  assert.equal(loginRes.statusCode, 200, loginRes.body);
+  const loginBody = JSON.parse(loginRes.body);
+  const oldRefreshToken = loginBody.tokens.refresh_token;
+
+  // Refresh
+  const res = await app.inject({
+    method: 'POST', url: '/auth/refresh',
+    payload: { refresh_token: oldRefreshToken },
+  });
+  assert.equal(res.statusCode, 200, res.body);
+  const body = JSON.parse(res.body);
+  assert.ok(body.access_token, 'response missing access_token');
+  assert.ok(body.refresh_token, 'response missing refresh_token');
+  assert.notEqual(body.refresh_token, oldRefreshToken, 'refresh token should be rotated');
+
+  // Old refresh token should no longer work
+  const oldRes = await app.inject({
+    method: 'POST', url: '/auth/refresh',
+    payload: { refresh_token: oldRefreshToken },
+  });
+  assert.equal(oldRes.statusCode, 401, oldRes.body);
+});

@@ -1,0 +1,4 @@
+-- Migration: 003_password_reset_tokens.down.sql
+DROP INDEX IF EXISTS idx_password_reset_tokens_hash;
+DROP INDEX IF EXISTS idx_password_reset_tokens_user;
+DROP TABLE IF EXISTS password_reset_tokens;

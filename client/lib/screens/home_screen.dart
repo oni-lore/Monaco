@@ -146,11 +146,6 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         actions: [
           IconButton(
-            tooltip: 'Refresh conversations',
-            onPressed: _loading ? null : _loadConversations,
-            icon: const Icon(Icons.refresh_rounded),
-          ),
-          IconButton(
             tooltip: 'Profile',
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => const ProfileScreen()),

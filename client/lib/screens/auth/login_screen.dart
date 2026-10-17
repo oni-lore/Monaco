@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:monaco/providers/auth_provider.dart';
+import 'package:monaco/screens/auth/forgot_password_screen.dart';
 import 'package:monaco/widgets/custom_button.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -166,9 +167,8 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _navigateToForgotPassword() {
-    // TODO: Navigate to forgot password screen
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Password reset coming soon')),
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const ForgotPasswordScreen()),
     );
   }
 

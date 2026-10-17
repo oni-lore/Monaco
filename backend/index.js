@@ -186,6 +186,72 @@ fastify.get('/users/me', { preHandler: verifyToken }, async (req, res) => {
   res.send({ user: result.rows[0] });
 });
 
+fastify.put('/users/me', { preHandler: verifyToken }, async (req, res) => {
+  const userId = req.user.sub;
+  const { username, email } = req.body;
+
+  if (username == null && email == null) {
+    return res.status(400).send({ error: 'At least one field (username or email) is required' });
+  }
+
+  const userResult = await pool.query('SELECT id, username, email FROM users WHERE id = $1', [userId]);
+  if (userResult.rows.length === 0) {
+    return res.status(404).send({ error: 'User not found' });
+  }
+
+  const currentUser = userResult.rows[0];
+  const updates = [];
+  const values = [];
+  let paramIdx = 1;
+
+  if (username != null && username !== currentUser.username) {
+    if (!username || username.length < 3) {
+      return res.status(400).send({ error: 'Username must be at least 3 characters' });
+    }
+    if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+      return res.status(400).send({ error: 'Username can only contain letters, numbers, and underscores' });
+    }
+    updates.push(`username = $${paramIdx++}`);
+    values.push(username);
+  }
+
+  if (email != null && email !== currentUser.email) {
+    if (!email) {
+      return res.status(400).send({ error: 'Email is required' });
+    }
+    const emailRegex = /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).send({ error: 'Invalid email format' });
+    }
+    const existingUser = await pool.query('SELECT id FROM users WHERE email = $1 AND id != $2', [email, userId]);
+    if (existingUser.rows.length > 0) {
+      return res.status(409).send({ error: 'Email already in use' });
+    }
+    updates.push(`email = $${paramIdx++}, email_verified = FALSE`);
+    values.push(email);
+  }
+
+  values.push(userId);
+
+  const result = await pool.query(
+    `UPDATE users SET ${updates.join(', ')}, updated_at = NOW() WHERE id = $${paramIdx} RETURNING id, username, email, email_verified, is_creator, created_at`,
+    values
+  );
+
+  const updatedUser = result.rows[0];
+
+  res.send({
+    user: {
+      id: updatedUser.id,
+      username: updatedUser.username,
+      email: updatedUser.email,
+      email_verified: updatedUser.email_verified,
+      is_creator: updatedUser.is_creator,
+      created_at: updatedUser.created_at,
+    },
+  });
+});
+
 fastify.get('/users/search', { preHandler: verifyToken }, async (req, res) => {
   const { q } = req.query;
   const userId = req.user.sub;
@@ -411,6 +477,32 @@ fastify.post('/auth/forgot-password', async (req, res) => {
 
   const userResult = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
 
+  // Always return success to prevent user enumeration
+  if (userResult.rows.length === 0) {
+    return res.send({ success: true, message: 'If the email exists, a password reset link has been sent' });
+  }
+
+  const userId = userResult.rows[0].id;
+  const resetToken = crypto.randomBytes(32).toString('hex');
+  const resetTokenHash = crypto.createHash('sha256').update(resetToken).digest('hex');
+  const resetTokenExpiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+
+  // Invalidate any existing unused reset tokens for this user
+  await pool.query(
+    'DELETE FROM password_reset_tokens WHERE user_id = $1 AND used_at IS NULL',
+    [userId]
+  );
+
+  await pool.query(
+    'INSERT INTO password_reset_tokens (user_id, token_hash, expires_at) VALUES ($1, $2, $3)',
+    [userId, resetTokenHash, resetTokenExpiry]
+  );
+
+  // In a production deployment, the reset token would be sent via email.
+  // The email provider configuration (SMTP/SendGrid/etc.) must be set up
+  // before the complete email delivery flow works.
+  // For now, the token is stored securely and can be used with /auth/reset-password.
+
   res.send({ success: true, message: 'If the email exists, a password reset link has been sent' });
 });
 
@@ -425,7 +517,96 @@ fastify.post('/auth/reset-password', async (req, res) => {
     return res.status(400).send({ error: 'new_password must be at least 6 characters' });
   }
 
-  res.send({ success: true, message: 'Password reset successful (mock implementation)' });
+  const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+
+  const result = await pool.query(
+    `SELECT prt.user_id, prt.expires_at, prt.used_at
+     FROM password_reset_tokens prt
+     WHERE prt.token_hash = $1 AND prt.used_at IS NULL`,
+    [tokenHash]
+  );
+
+  if (result.rows.length === 0) {
+    return res.status(400).send({ error: 'Invalid or expired reset token' });
+  }
+
+  const resetRow = result.rows[0];
+  const now = new Date();
+  if (new Date(resetRow.expires_at) < now) {
+    return res.status(400).send({ error: 'Reset token has expired' });
+  }
+
+  const hashedPassword = await bcrypt.hash(new_password, 10);
+  await pool.query('UPDATE users SET password_hash = $1, updated_at = NOW() WHERE id = $2', [hashedPassword, resetRow.user_id]);
+
+  // Mark the reset token as used
+  await pool.query(
+    'UPDATE password_reset_tokens SET used_at = NOW() WHERE token_hash = $1',
+    [tokenHash]
+  );
+
+  // Revoke all existing refresh tokens for this user (force re-login on all devices)
+  await pool.query(
+    'DELETE FROM refresh_tokens WHERE user_id = $1',
+    [resetRow.user_id]
+  );
+
+  res.send({ success: true, message: 'Password reset successfully' });
+});
+
+fastify.post('/auth/refresh', { preHandler: verifyToken }, async (req, res) => {
+  const userId = req.user.sub;
+  const { refresh_token } = req.body;
+
+  if (!refresh_token) {
+    return res.status(400).send({ error: 'refresh_token required' });
+  }
+
+  const tokenHash = crypto.createHash('sha256').update(refresh_token).digest('hex');
+
+  const result = await pool.query(
+    `SELECT id, expires_at FROM refresh_tokens
+     WHERE user_id = $1 AND token_hash = $2`,
+    [userId, tokenHash]
+  );
+
+  if (result.rows.length === 0) {
+    return res.status(401).send({ error: 'Invalid refresh token' });
+  }
+
+  const tokenRow = result.rows[0];
+  if (new Date(tokenRow.expires_at) < new Date()) {
+    return res.status(401).send({ error: 'Refresh token has expired' });
+  }
+
+  const userResult = await pool.query('SELECT id, username, email, email_verified, is_creator FROM users WHERE id = $1', [userId]);
+  if (userResult.rows.length === 0) {
+    return res.status(404).send({ error: 'User not found' });
+  }
+
+  const user = userResult.rows[0];
+
+  // Rotate: delete old token, create new one
+  await pool.query('DELETE FROM refresh_tokens WHERE id = $1', [tokenRow.id]);
+
+  const newAccessToken = jwt.sign(
+    { sub: user.id, username: user.username },
+    process.env.JWT_SECRET,
+    { expiresIn: '7d' }
+  );
+  const newRefreshToken = crypto.randomBytes(32).toString('hex');
+  const newRefreshTokenHash = crypto.createHash('sha256').update(newRefreshToken).digest('hex');
+  const newRefreshTokenExpiry = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+
+  await pool.query(
+    'INSERT INTO refresh_tokens (user_id, token_hash, expires_at) VALUES ($1, $2, $3)',
+    [user.id, newRefreshTokenHash, newRefreshTokenExpiry]
+  );
+
+  res.send({
+    access_token: newAccessToken,
+    refresh_token: newRefreshToken,
+  });
 });
 
 fastify.delete('/auth/delete-account', { preHandler: verifyToken }, async (req, res) => {

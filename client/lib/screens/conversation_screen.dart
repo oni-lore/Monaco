@@ -1,9 +1,11 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:intl/intl.dart';
 import 'package:monaco/providers/auth_provider.dart';
 import 'package:monaco/services/chat_api.dart';
 import 'package:monaco/models/message.dart';
+import 'package:monaco/utils/design_system.dart';
 
 class ConversationScreen extends StatefulWidget {
   final String conversationId;
@@ -19,7 +21,8 @@ class ConversationScreen extends StatefulWidget {
   State<ConversationScreen> createState() => _ConversationScreenState();
 }
 
-class _ConversationScreenState extends State<ConversationScreen> {
+class _ConversationScreenState extends State<ConversationScreen>
+    with WidgetsBindingObserver {
   final ChatApiService _api = ChatApiService();
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
@@ -30,16 +33,31 @@ class _ConversationScreenState extends State<ConversationScreen> {
   String? _error;
   String? _currentUserId;
   Timer? _pollTimer;
+  bool _isAppVisible = true;
+
+  static const Duration _pollInterval = Duration(seconds: 5);
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _loadMessages();
     _startPolling();
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    setState(() {
+      _isAppVisible = state == AppLifecycleState.resumed;
+    });
+    if (_isAppVisible) {
+      _loadMessages();
+    }
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _messageController.dispose();
     _scrollController.dispose();
     _pollTimer?.cancel();
@@ -48,8 +66,9 @@ class _ConversationScreenState extends State<ConversationScreen> {
   }
 
   void _startPolling() {
-    _pollTimer = Timer.periodic(const Duration(seconds: 3), (_) {
-      if (!_isSending && mounted) {
+    _pollTimer?.cancel();
+    _pollTimer = Timer.periodic(_pollInterval, (_) {
+      if (!_isSending && _isAppVisible && mounted) {
         _loadMessages();
       }
     });
@@ -148,10 +167,10 @@ class _ConversationScreenState extends State<ConversationScreen> {
     final isMe = message.senderId == _currentUserId;
     final alignment = isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start;
     final bubbleColor = isMe
-        ? Theme.of(context).colorScheme.primary
+        ? MonacoDesign.brandPrimary
         : Theme.of(context).colorScheme.surfaceContainerHighest;
     final textColor = isMe
-        ? Theme.of(context).colorScheme.onPrimary
+        ? Colors.white
         : Theme.of(context).colorScheme.onSurface;
 
     return Align(
@@ -159,29 +178,38 @@ class _ConversationScreenState extends State<ConversationScreen> {
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
         constraints: BoxConstraints(
-          maxWidth: MediaQuery.of(context).size.width * 0.75,
+          maxWidth: MediaQuery.of(context).size.width * 0.8,
         ),
         child: Column(
           crossAxisAlignment: alignment,
           children: [
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: BoxDecoration(
                 color: bubbleColor,
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.only(
+                  topLeft: const Radius.circular(MonacoDesign.radiusLg),
+                  topRight: const Radius.circular(MonacoDesign.radiusLg),
+                  bottomLeft: isMe ? const Radius.circular(MonacoDesign.radiusLg) : const Radius.circular(4),
+                  bottomRight: isMe ? const Radius.circular(4) : const Radius.circular(MonacoDesign.radiusLg),
+                ),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     message.displayText,
-                    style: TextStyle(color: textColor, fontSize: 15),
+                    style: TextStyle(
+                      color: textColor,
+                      fontSize: 15,
+                      height: 1.4,
+                    ),
                   ),
                   if (message.editCount > 0)
                     Text(
                       'Edited',
                       style: TextStyle(
-                        color: textColor.withOpacity(0.7),
+                        color: textColor.withOpacity(0.6),
                         fontSize: 10,
                         fontStyle: FontStyle.italic,
                       ),
@@ -190,11 +218,17 @@ class _ConversationScreenState extends State<ConversationScreen> {
               ),
             ),
             const SizedBox(height: 2),
-            Text(
-              message.timeString,
-              style: TextStyle(
-                color: textColor.withOpacity(0.6),
-                fontSize: 10,
+            Padding(
+              padding: EdgeInsets.only(
+                left: isMe ? 0 : 4,
+                right: isMe ? 4 : 0,
+              ),
+              child: Text(
+                message.timeString,
+                style: TextStyle(
+                  color: textColor.withOpacity(0.5),
+                  fontSize: 10,
+                ),
               ),
             ),
           ],
@@ -206,12 +240,17 @@ class _ConversationScreenState extends State<ConversationScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: MonacoDesign.brandSurface,
       appBar: AppBar(
-        title: Text(widget.conversationTitle),
-        centerTitle: false,
+        title: Text(
+          widget.conversationTitle,
+          style: const TextStyle(fontWeight: FontWeight.w700),
+        ),
+        backgroundColor: Colors.transparent,
         elevation: 0,
+        centerTitle: false,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
+          icon: const Icon(Icons.arrow_back_rounded, color: Colors.black87),
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
@@ -219,18 +258,45 @@ class _ConversationScreenState extends State<ConversationScreen> {
         children: [
           Expanded(
             child: _isLoading && _messages.isEmpty
-                ? const Center(child: CircularProgressIndicator())
+                ? const MonacoLoader()
                 : _error != null && _messages.isEmpty
                 ? Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.error_outline, color: Theme.of(context).colorScheme.error, size: 48),
-                  const SizedBox(height: 12),
-                  Text(_error!, textAlign: TextAlign.center),
-                  const SizedBox(height: 12),
+                  Container(
+                    width: 64,
+                    height: 64,
+                    decoration: BoxDecoration(
+                      color: MonacoDesign.error.withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.error_outline_rounded,
+                      color: MonacoDesign.error,
+                      size: 36,
+                    ),
+                  ),
+                  const SizedBox(height: MonacoDesign.md),
+                  Text(
+                    'Couldn’t load messages',
+                    style: MonacoDesign.headlineMedium(context).copyWith(
+                      fontWeight: FontWeight.w800,
+                      color: MonacoDesign.brandTextPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: MonacoDesign.sm),
+                  Text(
+                    _error!,
+                    textAlign: TextAlign.center,
+                    style: MonacoDesign.bodyMedium(context).copyWith(
+                      color: MonacoDesign.brandTextSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: MonacoDesign.lg),
                   FilledButton(
                     onPressed: _loadMessages,
+                    style: MonacoDesign.primaryButton(context),
                     child: const Text('Try again'),
                   ),
                 ],
@@ -250,8 +316,9 @@ class _ConversationScreenState extends State<ConversationScreen> {
               child: Text(
                 _error!,
                 style: TextStyle(
-                  color: Theme.of(context).colorScheme.error,
+                  color: MonacoDesign.error,
                   fontSize: 12,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
             ),
@@ -265,42 +332,68 @@ class _ConversationScreenState extends State<ConversationScreen> {
     return Container(
       padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainer,
+        color: MonacoDesign.brandCard,
         border: Border(
-          top: BorderSide(color: Theme.of(context).colorScheme.outlineVariant, width: 1),
+          top: BorderSide(color: Theme.of(context).colorScheme.outlineVariant.withOpacity(0.3), width: 1),
         ),
       ),
-      child: Row(
-        children: [
-          Expanded(
-            child: TextField(
-              controller: _messageController,
-              maxLines: null,
-              textInputAction: TextInputAction.send,
-              onSubmitted: (_) => _sendMessage(),
-              decoration: InputDecoration(
-                hintText: 'Type a message...',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(24),
-                  borderSide: BorderSide.none,
+      child: SafeArea(
+        top: false,
+        child: Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: _messageController,
+                maxLines: null,
+                textInputAction: TextInputAction.send,
+                onSubmitted: (_) => _sendMessage(),
+                decoration: InputDecoration(
+                  hintText: 'Type a message...',
+                  hintStyle: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.5),
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(MonacoDesign.radiusFull),
+                    borderSide: BorderSide.none,
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(MonacoDesign.radiusFull),
+                    borderSide: BorderSide.none,
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(MonacoDesign.radiusFull),
+                    borderSide: BorderSide(color: MonacoDesign.brandPrimary, width: 1.5),
+                  ),
+                  filled: true,
+                  fillColor: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                 ),
-                filled: true,
-                fillColor: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                style: const TextStyle(fontSize: 15),
               ),
             ),
-          ),
-          const SizedBox(width: 8),
-          CircleAvatar(
-            radius: 24,
-            backgroundColor: Theme.of(context).colorScheme.primary,
-            child: IconButton(
-              icon: const Icon(Icons.send_rounded, color: Colors.white, size: 20),
-              onPressed: _isSending ? null : _sendMessage,
-              tooltip: 'Send',
+            const SizedBox(width: MonacoDesign.sm),
+            Container(
+              decoration: BoxDecoration(
+                color: MonacoDesign.brandPrimary,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: MonacoDesign.brandPrimary.withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: IconButton(
+                icon: const Icon(Icons.send_rounded, color: Colors.white, size: 20),
+                onPressed: _isSending ? null : _sendMessage,
+                tooltip: 'Send',
+                constraints: const BoxConstraints(),
+                padding: const EdgeInsets.all(14),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

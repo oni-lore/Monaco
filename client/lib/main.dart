@@ -4,10 +4,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:monaco/providers/auth_provider.dart';
 import 'package:monaco/screens/auth/login_screen.dart';
 import 'package:monaco/screens/auth/registration_screen.dart';
+import 'package:monaco/screens/auth/forgot_password_screen.dart';
+import 'package:monaco/screens/auth/reset_password_screen.dart';
 import 'package:monaco/screens/home_screen.dart';
 import 'package:monaco/screens/conversation_screen.dart';
 import 'package:monaco/screens/search_screen.dart';
 import 'package:monaco/screens/profile_screen.dart';
+import 'package:monaco/widgets/monaco_loader.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -45,6 +48,8 @@ class MonacoApp extends StatelessWidget {
       routes: {
         '/login': (_) => const LoginScreen(),
         '/register': (_) => const RegistrationScreen(),
+        '/forgot-password': (_) => const ForgotPasswordScreen(),
+        '/reset-password': (_) => const ResetPasswordScreen(),
         '/home': (_) => const HomeScreen(),
         '/search': (_) => const SearchScreen(),
         '/profile': (_) => const ProfileScreen(),
@@ -72,9 +77,7 @@ class AuthGate extends StatelessWidget {
   Widget build(BuildContext context) => Consumer<AuthProvider>(
     builder: (BuildContext context, AuthProvider auth, Widget? _) {
       if (!auth.isInitialized) {
-        return const Scaffold(
-          body: Center(child: CircularProgressIndicator()),
-        );
+        return const MonacoLoader();
       }
       if (auth.isAuthenticated) {
         return const HomeScreen();

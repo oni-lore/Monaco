@@ -199,5 +199,36 @@ class ChatApiService {
     }
   }
 
+  Future<User> updateProfile({
+    required String accessToken,
+    String? username,
+    String? email,
+  }) async {
+    final response = await _client.put(
+      Uri.parse('$baseUrl/users/me'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $accessToken',
+      },
+      body: jsonEncode({
+        if (username != null) 'username': username,
+        if (email != null) 'email': email,
+      }),
+    ).timeout(_requestTimeout);
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      return User.fromJson(data['user'] as Map<String, dynamic>);
+    } else if (response.statusCode == 401) {
+      throw Exception('Session expired. Please log in again.');
+    } else if (response.statusCode == 409) {
+      final error = jsonDecode(response.body)['error'] as String? ?? 'This username or email is already in use';
+      throw Exception(error);
+    } else {
+      final error = jsonDecode(response.body)['error'] as String? ?? 'Failed to update profile';
+      throw Exception(error);
+    }
+  }
+
   void dispose() => _client.close();
 }
