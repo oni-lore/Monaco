@@ -1,4 +1,5 @@
 require('dotenv').config();
+const crypto = require('crypto');
 
 const fastify = require('fastify')({ logger: true });
 const pg = require('pg');
@@ -37,11 +38,39 @@ fastify.post('/register', async (req, res) => {
   const hashedPassword = await bcrypt.hash(password, 10);
 
   try {
-    await pool.query(
-      'INSERT INTO users (username, password_hash, email, created_at) VALUES ($1, $2, $3, NOW())',
+    const result = await pool.query(
+      'INSERT INTO users (username, password_hash, email, created_at) VALUES ($1, $2, $3, NOW()) RETURNING id, username, email, email_verified, is_creator, created_at',
       [username, hashedPassword, email]
     );
-    res.send({ success: true, message: 'User registered successfully' });
+    const user = result.rows[0];
+
+    const accessToken = jwt.sign(
+      { sub: user.id, username: user.username },
+      process.env.JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+    const refreshToken = crypto.randomBytes(32).toString('hex');
+    const refreshTokenExpiry = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+
+    await pool.query(
+      'INSERT INTO refresh_tokens (user_id, token_hash, expires_at) VALUES ($1, $2, $3)',
+      [user.id, refreshToken, refreshTokenExpiry]
+    );
+
+    res.send({
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        email_verified: user.email_verified,
+        is_creator: user.is_creator,
+        created_at: user.created_at,
+      },
+      tokens: {
+        access_token: accessToken,
+        refresh_token: refreshToken,
+      },
+    });
   } catch (err) {
     if (err.code === '23505') {
       return res.status(409).send({ error: 'Username or email already exists' });
@@ -66,13 +95,33 @@ fastify.post('/login', async (req, res) => {
     return res.status(401).send({ error: 'Invalid credentials' });
   }
 
-  const token = jwt.sign(
+  const accessToken = jwt.sign(
     { sub: user.id, username: user.username },
     process.env.JWT_SECRET,
     { expiresIn: '7d' }
   );
+  const refreshToken = crypto.randomBytes(32).toString('hex');
+  const refreshTokenExpiry = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
 
-  res.send({ success: true, token });
+  await pool.query(
+    'INSERT INTO refresh_tokens (user_id, token_hash, expires_at) VALUES ($1, $2, $3)',
+    [user.id, refreshToken, refreshTokenExpiry]
+  );
+
+  res.send({
+    user: {
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      email_verified: user.email_verified,
+      is_creator: user.is_creator,
+      created_at: user.created_at,
+    },
+    tokens: {
+      access_token: accessToken,
+      refresh_token: refreshToken,
+    },
+  });
 });
 
 async function haveAcceptedConnection(userId1, userId2) {

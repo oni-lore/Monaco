@@ -3,6 +3,7 @@
 const { test, before, after } = require('node:test');
 const assert = require('node:assert/strict');
 const crypto = require('node:crypto');
+const bcrypt = require('bcrypt');
 const { Pool } = require('pg');
 
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
@@ -13,12 +14,13 @@ const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 
 const tag = crypto.randomBytes(4).toString('hex');
 
-async function makeUser(name) {
+async function makeUser(name, password) {
+  const hashed = await bcrypt.hash(password || 'testpass123', 10);
   const r = await pool.query(
-    `INSERT INTO users (username, password_hash, email) VALUES ($1, 'x', $2) RETURNING id`,
-    [`${name}_${tag}`, `${name}_${tag}@test.com`]
+    `INSERT INTO users (username, password_hash, email) VALUES ($1, $2, $3) RETURNING id, username, email, email_verified, is_creator, created_at`,
+    [`${name}_${tag}`, hashed, `${name}_${tag}@test.com`]
   );
-  return r.rows[0].id;
+  return r.rows[0];
 }
 async function connect(requester, recipient, status) {
   await pool.query(
@@ -123,4 +125,72 @@ test('6. non-participants cannot send messages into a conversation', async () =>
   assert.equal(res.statusCode, 403);
   const r = await pool.query(`SELECT count(*)::int AS n FROM messages WHERE conversation_id=$1`, [conv]);
   assert.equal(r.rows[0].n, 0);
+});
+
+test('7. /register returns user and tokens matching client AuthResponse model', async () => {
+  const res = await app.inject({
+    method: 'POST', url: '/register',
+    payload: { username: `reguser_${tag}`, password: 'RegPass123!', email: `reg_${tag}@example.com` },
+  });
+  assert.equal(res.statusCode, 200, res.body);
+  const body = JSON.parse(res.body);
+  assert.ok(body.user, 'response missing user object');
+  assert.ok(body.tokens, 'response missing tokens object');
+  assert.ok(body.user.id, 'user.id missing');
+  assert.ok(body.user.username, 'user.username missing');
+  assert.ok(body.user.email, 'user.email missing');
+  assert.ok(body.tokens.access_token, 'tokens.access_token missing');
+  assert.ok(body.tokens.refresh_token, 'tokens.refresh_token missing');
+  // Verify no password_hash leaked
+  assert.equal(body.user.password_hash, undefined, 'password_hash must not be returned');
+  // Verify user exists in DB
+  const dbUser = await pool.query('SELECT id, username, email FROM users WHERE id = $1', [body.user.id]);
+  assert.equal(dbUser.rows.length, 1);
+  assert.equal(dbUser.rows[0].username, `reguser_${tag}`);
+});
+
+test('8. /login returns user and tokens matching client AuthResponse model', async () => {
+  // First create a user with a known password
+  await makeUser('logintest', 'LoginPass123!');
+  const res = await app.inject({
+    method: 'POST', url: '/login',
+    payload: { username: `logintest_${tag}`, password: 'LoginPass123!' },
+  });
+  assert.equal(res.statusCode, 200, res.body);
+  const body = JSON.parse(res.body);
+  assert.ok(body.user, 'response missing user object');
+  assert.ok(body.tokens, 'response missing tokens object');
+  assert.ok(body.user.id, 'user.id missing');
+  assert.ok(body.user.username, 'user.username missing');
+  assert.ok(body.user.email, 'user.email missing');
+  assert.ok(body.tokens.access_token, 'tokens.access_token missing');
+  assert.ok(body.tokens.refresh_token, 'tokens.refresh_token missing');
+  // Verify refresh token was stored in DB
+  const rt = await pool.query('SELECT 1 FROM refresh_tokens WHERE user_id = $1', [body.user.id]);
+  assert.equal(rt.rowCount, 1, 'refresh token not stored in database');
+});
+
+test('9. /register rejects duplicate username', async () => {
+  await app.inject({
+    method: 'POST', url: '/register',
+    payload: { username: `dupe_${tag}`, password: 'Pass123!', email: `dupe1_${tag}@example.com` },
+  });
+  const res = await app.inject({
+    method: 'POST', url: '/register',
+    payload: { username: `dupe_${tag}`, password: 'Pass123!', email: `dupe2_${tag}@example.com` },
+  });
+  assert.equal(res.statusCode, 409, res.body);
+  const body = JSON.parse(res.body);
+  assert.ok(body.error, 'error message missing');
+});
+
+test('10. /login rejects wrong password', async () => {
+  await makeUser('wrongpw', 'CorrectPass123!');
+  const res = await app.inject({
+    method: 'POST', url: '/login',
+    payload: { username: `wrongpw_${tag}`, password: 'WrongPass123!' },
+  });
+  assert.equal(res.statusCode, 401, res.body);
+  const body = JSON.parse(res.body);
+  assert.ok(body.error, 'error message missing');
 });
