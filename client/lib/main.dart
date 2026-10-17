@@ -5,6 +5,9 @@ import 'package:monaco/providers/auth_provider.dart';
 import 'package:monaco/screens/auth/login_screen.dart';
 import 'package:monaco/screens/auth/registration_screen.dart';
 import 'package:monaco/screens/home_screen.dart';
+import 'package:monaco/screens/conversation_screen.dart';
+import 'package:monaco/screens/search_screen.dart';
+import 'package:monaco/screens/profile_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -43,6 +46,20 @@ class MonacoApp extends StatelessWidget {
         '/login': (_) => const LoginScreen(),
         '/register': (_) => const RegistrationScreen(),
         '/home': (_) => const HomeScreen(),
+        '/search': (_) => const SearchScreen(),
+        '/profile': (_) => const ProfileScreen(),
+      },
+      onGenerateRoute: (settings) {
+        if (settings.name == '/conversation') {
+          final args = settings.arguments as Map<String, dynamic>;
+          return MaterialPageRoute(
+            builder: (_) => ConversationScreen(
+              conversationId: args['conversationId'] as String,
+              conversationTitle: args['conversationTitle'] as String,
+            ),
+          );
+        }
+        return null;
       },
     ),
   );

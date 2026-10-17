@@ -4,10 +4,9 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user.dart';
 import '../services/auth_api.dart';
+import '../services/chat_api.dart';
 
 class AuthProvider extends ChangeNotifier {
-  // final AuthApiService _api = AuthApiService();
-
   User? _user;
   AuthTokens? _tokens;
   bool _isLoading = false;
@@ -55,6 +54,14 @@ class AuthProvider extends ChangeNotifier {
       if (userJson != null) {
         _user = User.fromJson(jsonDecode(userJson) as Map<String, dynamic>);
       }
+      // Also try to fetch fresh profile from server
+      try {
+        final freshUser = await ChatApiService().getMyProfile(accessToken: _tokens!.accessToken);
+        _user = freshUser;
+        await _saveUserData(freshUser);
+      } catch (_) {
+        // Server may be unreachable, use cached data
+      }
     } catch (e) {
       await _clearAuthData();
     }
@@ -96,6 +103,24 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
+  /// Attempt to refresh the access token using the refresh token.
+  /// Requires a /auth/refresh endpoint on the backend.
+  Future<bool> refreshAccessToken() async {
+    if (_tokens == null) return false;
+    _setLoading(true);
+    try {
+      // Note: The backend currently does not have a /auth/refresh endpoint.
+      // When added, call it here and update _tokens with the new access token.
+      // For now, return false to indicate refresh is not available.
+      _setLoading(false);
+      return false;
+    } catch (e) {
+      _error = e.toString();
+      _setLoading(false);
+      return false;
+    }
+  }
+
   Future<void> _saveAuthData(AuthResponse response) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('access_token', response.tokens.accessToken);
@@ -104,6 +129,13 @@ class AuthProvider extends ChangeNotifier {
 
     _tokens = response.tokens;
     _user = response.user;
+    notifyListeners();
+  }
+
+  Future<void> _saveUserData(User user) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('user_data', jsonEncode(user.toJson()));
+    _user = user;
     notifyListeners();
   }
 

@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 import 'package:monaco/providers/auth_provider.dart';
+import 'package:monaco/services/chat_api.dart';
+import 'package:monaco/models/conversation.dart';
+import 'package:monaco/screens/conversation_screen.dart';
+import 'package:monaco/screens/search_screen.dart';
+import 'package:monaco/screens/profile_screen.dart';
 import 'package:monaco/utils/constants.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -13,14 +16,22 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  bool _loading = true;
+  final ChatApiService _api = ChatApiService();
+  List<Conversation> _conversations = [];
+  bool _isLoading = true;
   String? _error;
-  List<Map<String, dynamic>> _conversations = [];
+  String _searchQuery = '';
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _loadConversations());
+    _loadConversations();
+  }
+
+  @override
+  void dispose() {
+    _api.dispose();
+    super.dispose();
   }
 
   Future<void> _loadConversations() async {
@@ -40,24 +51,10 @@ class _HomeScreenState extends State<HomeScreen> {
     });
 
     try {
-      final response = await http.get(
-        Uri.parse('${ApiConstants.baseUrl}/conversations'),
-        headers: {'Authorization': 'Bearer $token'},
-      ).timeout(const Duration(seconds: 15));
-
-      if (response.statusCode != 200) {
-        final body = jsonDecode(response.body);
-        throw Exception(body['error'] ?? 'Could not load conversations');
-      }
-
-      final data = jsonDecode(response.body) as Map<String, dynamic>;
-      final items = (data['conversations'] as List? ?? [])
-          .map((item) => Map<String, dynamic>.from(item as Map))
-          .toList();
-
+      final conversations = await _api.getConversations(accessToken: token);
       if (mounted) {
         setState(() {
-          _conversations = items;
+          _conversations = conversations;
           _loading = false;
         });
       }
@@ -71,9 +68,65 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  bool get _loading => _isLoading;
+  set _loading(bool v) => _isLoading = v;
+
+  List<Conversation> get _filteredConversations {
+    if (_searchQuery.isEmpty) return _conversations;
+    return _conversations.where((c) {
+      final name = c.displayName.toLowerCase();
+      return name.contains(_searchQuery.toLowerCase());
+    }).toList();
+  }
+
+  Future<void> _openConversation(Conversation conversation) async {
+    final auth = context.read<AuthProvider>();
+    final token = auth.tokens?.accessToken;
+    if (token == null) return;
+
+    // Fetch conversation details to get participants
+    try {
+      final detail = await _api.getConversation(
+        conversationId: conversation.id,
+        accessToken: token,
+      );
+
+      if (mounted) {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => ConversationScreen(
+              conversationId: detail.id,
+              conversationTitle: detail.displayName,
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Cannot open conversation: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _startNewConversation() async {
+    final result = await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => const SearchScreen(),
+      ),
+    );
+    // If a conversation was started, refresh the list
+    if (result == true) {
+      _loadConversations();
+    }
+  }
+
   Future<void> _logout() async {
     await context.read<AuthProvider>().logout();
-    if (mounted) Navigator.of(context).pushNamedAndRemoveUntil('/login', (_) => false);
+    if (mounted) {
+      Navigator.of(context).pushNamedAndRemoveUntil('/login', (_) => false);
+    }
   }
 
   String _dateLabel(dynamic value) {
@@ -110,6 +163,13 @@ class _HomeScreenState extends State<HomeScreen> {
             icon: const Icon(Icons.refresh_rounded),
           ),
           IconButton(
+            tooltip: 'Profile',
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const ProfileScreen()),
+            ),
+            icon: const Icon(Icons.person_rounded),
+          ),
+          IconButton(
             tooltip: 'Log out',
             onPressed: _logout,
             icon: const Icon(Icons.logout_rounded),
@@ -119,86 +179,170 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       body: RefreshIndicator(
         onRefresh: _loadConversations,
-        child: ListView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
+        child: Column(
           children: [
-            Text('Your space, ${username}.', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800, letterSpacing: -0.7)),
-            const SizedBox(height: 6),
-            Text('Your conversations stay right here.', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)),
-            const SizedBox(height: 24),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.55),
-                borderRadius: BorderRadius.circular(18),
-              ),
-              child: Row(
+            Expanded(
+              child: ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
                 children: [
-                  Icon(Icons.search_rounded, color: Theme.of(context).colorScheme.onSurfaceVariant),
-                  const SizedBox(width: 12),
-                  Expanded(child: Text('Search conversations', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant))),
+                  Text(
+                    'Your space, $username.',
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -0.7,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Your conversations stay right here.',
+                    style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                  ),
+                  const SizedBox(height: 24),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.55),
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.search_rounded, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            'Search conversations',
+                            style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 28),
+                  Row(
+                    children: [
+                      Text(
+                        'MESSAGES',
+                        style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 1.5,
+                        ),
+                      ),
+                      const Spacer(),
+                      if (!_loading)
+                        Text(
+                          '${_filteredConversations.length}',
+                          style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  if (_loading)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 60),
+                      child: Center(child: CircularProgressIndicator()),
+                    )
+                  else if (_error != null)
+                    _StatusPanel(
+                      icon: Icons.cloud_off_rounded,
+                      title: 'Couldn’t load messages',
+                      message: _error!,
+                      actionLabel: 'Try again',
+                      onAction: _loadConversations,
+                    )
+                  else if (_filteredConversations.isEmpty)
+                    _StatusPanel(
+                      icon: Icons.forum_outlined,
+                      title: 'Your conversations start here',
+                      message: 'When you start a conversation, it will appear here. Pull down to refresh.',
+                      actionLabel: 'Refresh',
+                      onAction: _loadConversations,
+                    )
+                  else
+                    ..._filteredConversations.map((conversation) {
+                      final other = conversation.otherParticipant;
+                      final hasLastMessage = conversation.hasLastMessage;
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: Material(
+                          color: Theme.of(context).colorScheme.surfaceContainerLow,
+                          borderRadius: BorderRadius.circular(18),
+                          child: ListTile(
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                            leading: CircleAvatar(
+                              radius: 25,
+                              backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                              child: Text(
+                                conversation.displayName.isNotEmpty
+                                    ? conversation.displayName.substring(0, 1).toUpperCase()
+                                    : '?',
+                                style: TextStyle(
+                                  color: Theme.of(context).colorScheme.onPrimaryContainer,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 18,
+                                ),
+                              ),
+                            ),
+                            title: Text(
+                              conversation.displayName,
+                              style: const TextStyle(fontWeight: FontWeight.w700),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            subtitle: hasLastMessage
+                                ? Text(
+                              conversation.lastMessagePreview,
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                fontSize: 13,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            )
+                                : Text(
+                              'No messages yet',
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+                                fontSize: 13,
+                              ),
+                            ),
+                            trailing: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                if (conversation.lastMessageAt != null)
+                                  Text(
+                                    conversation.lastMessageTime,
+                                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                    ),
+                                  ),
+                                const SizedBox(height: 2),
+                              ],
+                            ),
+                            onTap: () => _openConversation(conversation),
+                          ),
+                        ),
+                      );
+                    }),
                 ],
               ),
             ),
-            const SizedBox(height: 28),
-            Row(
-              children: [
-                Text('MESSAGES', style: Theme.of(context).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w800, letterSpacing: 1.5)),
-                const Spacer(),
-                if (!_loading) Text('${_conversations.length}', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)),
-              ],
-            ),
-            const SizedBox(height: 12),
-            if (_loading)
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 60),
-                child: Center(child: CircularProgressIndicator()),
-              )
-            else if (_error != null)
-              _StatusPanel(
-                icon: Icons.cloud_off_rounded,
-                title: 'Couldn’t load messages',
-                message: _error!,
-                actionLabel: 'Try again',
-                onAction: _loadConversations,
-              )
-            else if (_conversations.isEmpty)
-              _StatusPanel(
-                icon: Icons.forum_outlined,
-                title: 'Your conversations start here',
-                message: 'When you start a conversation, it will appear here. Pull down to refresh.',
-                actionLabel: 'Refresh',
-                onAction: _loadConversations,
-              )
-            else
-              ..._conversations.map((conversation) {
-                final name = (conversation['name'] as String?)?.trim();
-                final title = (name == null || name.isEmpty) ? 'Direct conversation' : name;
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
-                  child: Material(
-                    color: Theme.of(context).colorScheme.surfaceContainerLow,
-                    borderRadius: BorderRadius.circular(18),
-                    child: ListTile(
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                      leading: CircleAvatar(
-                        radius: 25,
-                        backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-                        child: Icon(Icons.person_rounded, color: Theme.of(context).colorScheme.onPrimaryContainer),
-                      ),
-                      title: Text(title, style: const TextStyle(fontWeight: FontWeight.w700)),
-                      subtitle: const Text('Open conversation'),
-                      trailing: Text(_dateLabel(conversation['created_at']), style: Theme.of(context).textTheme.labelSmall),
-                      onTap: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('The conversation view is not connected yet.')),
-                        );
-                      },
-                    ),
+            // Floating action button to start new conversation
+            if (!_loading && _error == null)
+              Align(
+                alignment: Alignment.bottomRight,
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: FloatingActionButton.extended(
+                    onPressed: _startNewConversation,
+                    icon: const Icon(Icons.person_add_rounded, size: 18),
+                    label: const Text('New conversation'),
+                    backgroundColor: Theme.of(context).colorScheme.primary,
+                    foregroundColor: Theme.of(context).colorScheme.onPrimary,
                   ),
-                );
-              }),
+                ),
+              ),
           ],
         ),
       ),
@@ -241,9 +385,17 @@ class _StatusPanel extends StatelessWidget {
             child: Icon(icon, size: 30, color: colors.onPrimaryContainer),
           ),
           const SizedBox(height: 18),
-          Text(title, textAlign: TextAlign.center, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800)),
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+          ),
           const SizedBox(height: 8),
-          Text(message, textAlign: TextAlign.center, style: TextStyle(height: 1.45, color: colors.onSurfaceVariant)),
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: TextStyle(height: 1.45, color: colors.onSurfaceVariant),
+          ),
           const SizedBox(height: 20),
           FilledButton.icon(
             onPressed: onAction,
