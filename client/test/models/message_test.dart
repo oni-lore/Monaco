@@ -138,30 +138,30 @@ void main() {
       };
 
       expect(
-        () => AuthResponse.fromJson(json),
-        isA<TypeError>(),
-      );
-    });
+      () => AuthResponse.fromJson(json),
+      throwsA(isA<TypeError>()),
+    );
+  });
 
-    test('fromJson throws when tokens is missing', () {
-      final json = {
-        'user': {
-          'id': 'user-1',
-          'username': 'dave',
-          'email': 'dave@example.com',
-          'profile_picture_url': null,
-          'current_monarch_id': null,
-          'created_at': '2026-01-01T00:00:00Z',
-          'birthday': null,
-          'email_verified': false,
-          'is_creator': false,
-        },
-      };
+  test('fromJson throws when tokens is missing', () {
+    final json = {
+      'user': {
+        'id': 'user-1',
+        'username': 'dave',
+        'email': 'dave@example.com',
+        'profile_picture_url': null,
+        'current_monarch_id': null,
+        'created_at': '2026-01-01T00:00:00Z',
+        'birthday': null,
+        'email_verified': false,
+        'is_creator': false,
+      },
+    };
 
-      expect(
-        () => AuthResponse.fromJson(json),
-        isA<TypeError>(),
-      );
+    expect(
+      () => AuthResponse.fromJson(json),
+      throwsA(isA<TypeError>()),
+    );
     });
   });
 
