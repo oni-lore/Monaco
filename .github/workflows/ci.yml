@@ -42,7 +42,7 @@ jobs:
 
       - name: Dart analyze
         working-directory: ./client
-        run: flutter analyze
+        run: flutter analyze --no-fatal-infos
 
       - name: Run Flutter tests
         working-directory: ./client

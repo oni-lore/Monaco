@@ -1,7 +1,6 @@
 analyzer:
   errors:
     todo: ignore
-    fatal-infos: false
 
 linter:
   rules:
