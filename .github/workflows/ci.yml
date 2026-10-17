@@ -44,6 +44,10 @@ jobs:
         working-directory: ./client
         run: flutter analyze
 
+      - name: Run Flutter tests
+        working-directory: ./client
+        run: flutter test
+
   test:
     runs-on: ubuntu-latest
     name: Run unit and integration tests
@@ -74,6 +78,10 @@ jobs:
       - name: Install backend dependencies
         working-directory: ./backend
         run: npm install
+
+      - name: Run backend lint
+        working-directory: ./backend
+        run: npx eslint index.js test/ || true
 
       - name: Run database migrations (fail-fast) and verify schema
         working-directory: ./backend
