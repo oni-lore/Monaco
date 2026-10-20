@@ -15,6 +15,14 @@ enum DMWheelMode { off, left, right }
 /// The wheel slides in from the selected screen edge and displays private
 /// DM contacts as circular avatars arranged along a curved arc. Tapping an
 /// avatar opens that user's direct conversation directly.
+///
+/// The wheel:
+/// - Is exclusively for private DMs (no Councils or groups)
+/// - Respects device safe areas and available screen dimensions
+/// - Closes on outside tap or Back button
+/// - Restores underlying screen scroll position when closed
+/// - Is available on Chats, Loading Chambers, DM conversations, and
+///   Council conversations (not on Profile, Settings, or Notifications)
 class DMQuickAccessWheel extends StatefulWidget {
   /// Whether the wheel is enabled.
   final DMWheelMode mode;
@@ -233,57 +241,28 @@ class _DMQuickAccessWheelState extends State<DMQuickAccessWheel>
       final username =
           otherParticipant?['username'] as String? ?? dm.displayName;
 
-      final appear = CurvedAnimation(
-        parent: _openController,
-        curve: Interval(0.1 + i * 0.05, 0.6, curve: Curves.easeOut),
-      );
-
       children.add(
-        AnimatedBuilder(
-          animation: appear,
-          builder: (context, child) {
-            return Opacity(
-              opacity: appear.value,
-              child: Transform.translate(
-                offset: Offset(
-                  center.dx + pos.dx - _avatarSize / 2,
-                  center.dy + pos.dy - _avatarSize / 2,
-                ),
-                child: GestureDetector(
-                  onTap: () => _selectContact(dm),
-                  child: Container(
-                    width: _avatarSize,
-                    height: _avatarSize,
-                    decoration: BoxDecoration(
-                      color: MonacoDesign.charcoalElevated,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: MonacoDesign.borderSubtle,
-                        width: 1.5,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: MonacoDesign.inkBlack.withOpacity(0.15),
-                          blurRadius: 6,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Center(
-                      child: Text(
-                        username.isNotEmpty
-                            ? username.substring(0, 1).toUpperCase()
-                            : '?',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w800,
-                          color: MonacoDesign.accentBright,
-                          letterSpacing: -0.5,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
+        Container(
+          width: _avatarSize,
+          height: _avatarSize,
+          decoration: BoxDecoration(
+            color: MonacoDesign.charcoalElevated,
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: MonacoDesign.borderSubtle,
+              width: 1.5,
+            ),
+          ),
+          child: Center(
+            child: Text(
+              username.isNotEmpty
+                  ? username.substring(0, 1).toUpperCase()
+                  : '?',
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w800,
+                color: MonacoDesign.accentBright,
+                letterSpacing: -0.5,
               ),
             ),
           ),
