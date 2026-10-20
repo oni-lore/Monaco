@@ -6,6 +6,8 @@ import 'package:monaco/models/message.dart';
 import 'package:monaco/screens/conversation_screen.dart';
 import 'package:monaco/screens/search_screen.dart';
 import 'package:monaco/screens/profile_screen.dart';
+import 'package:monaco/screens/loading_chambers_screen.dart';
+import 'package:monaco/utils/design_system.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -19,7 +21,7 @@ class _HomeScreenState extends State<HomeScreen> {
   List<Conversation> _conversations = [];
   bool _isLoading = true;
   String? _error;
-  String _searchQuery = '';
+  int _selectedIndex = 0;
 
   @override
   void initState() {
@@ -38,14 +40,14 @@ class _HomeScreenState extends State<HomeScreen> {
     final token = auth.tokens?.accessToken;
     if (token == null) {
       setState(() {
-        _loading = false;
+        _isLoading = false;
         _error = 'Your session has expired. Please sign in again.';
       });
       return;
     }
 
     setState(() {
-      _loading = true;
+      _isLoading = true;
       _error = null;
     });
 
@@ -54,28 +56,21 @@ class _HomeScreenState extends State<HomeScreen> {
       if (mounted) {
         setState(() {
           _conversations = conversations;
-          _loading = false;
+          _isLoading = false;
         });
       }
     } catch (e) {
       if (mounted) {
         setState(() {
           _error = e.toString().replaceFirst('Exception: ', '');
-          _loading = false;
+          _isLoading = false;
         });
       }
     }
   }
 
-  bool get _loading => _isLoading;
-  set _loading(bool v) => _isLoading = v;
-
   List<Conversation> get _filteredConversations {
-    if (_searchQuery.isEmpty) return _conversations;
-    return _conversations.where((c) {
-      final name = c.displayName.toLowerCase();
-      return name.contains(_searchQuery.toLowerCase());
-    }).toList();
+    return _conversations;
   }
 
   Future<void> _openConversation(Conversation conversation) async {
@@ -83,7 +78,6 @@ class _HomeScreenState extends State<HomeScreen> {
     final token = auth.tokens?.accessToken;
     if (token == null) return;
 
-    // Fetch conversation details to get participants
     try {
       final detail = await _api.getConversation(
         conversationId: conversation.id,
@@ -109,18 +103,6 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  Future<void> _startNewConversation() async {
-    final result = await Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => const SearchScreen(),
-      ),
-    );
-    // If a conversation was started, refresh the list
-    if (result == true) {
-      _loadConversations();
-    }
-  }
-
   Future<void> _logout() async {
     await context.read<AuthProvider>().logout();
     if (mounted) {
@@ -128,261 +110,804 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final auth = context.watch<AuthProvider>();
-    final username = auth.user?.username ?? 'there';
+  void _onBottomNavTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
 
-    return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      appBar: AppBar(
-        titleSpacing: 20,
-        title: const Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Monaco', style: TextStyle(fontWeight: FontWeight.w800, letterSpacing: -0.5)),
-            Text('PRIVATE MESSAGING', style: TextStyle(fontSize: 10, letterSpacing: 1.8, fontWeight: FontWeight.w600)),
-          ],
-        ),
-        actions: [
+  // ── Monaco header ──────────────────────────────────────────────────────
+  Widget _buildHeader() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(MonacoDesign.lg, MonacoDesign.lg, MonacoDesign.lg, MonacoDesign.sm),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: MonacoDesign.charcoalCard,
+              borderRadius: BorderRadius.circular(MonacoDesign.radiusMd),
+              border: Border.all(color: MonacoDesign.borderMuted, width: 1),
+            ),
+            child: const Center(
+              child: Text(
+                'M',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w900,
+                  color: MonacoDesign.accentBright,
+                  letterSpacing: -1,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: MonacoDesign.md),
+          const Text(
+            'monaco',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w900,
+              color: MonacoDesign.textInk,
+              letterSpacing: -0.5,
+            ),
+          ),
+          const Spacer(),
           IconButton(
             tooltip: 'Profile',
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const ProfileScreen()),
-            ),
-            icon: const Icon(Icons.person_rounded),
+            icon: const Icon(Icons.person_rounded, size: 24, color: MonacoDesign.textSecondary),
+            onPressed: () => _onBottomNavTapped(2),
           ),
           IconButton(
             tooltip: 'Log out',
+            icon: const Icon(Icons.logout_rounded, size: 24, color: MonacoDesign.textSecondary),
             onPressed: _logout,
-            icon: const Icon(Icons.logout_rounded),
           ),
-          const SizedBox(width: 8),
         ],
       ),
-      body: RefreshIndicator(
-        onRefresh: _loadConversations,
-        child: Column(
-          children: [
-            Expanded(
-              child: ListView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
-                children: [
-                  Text(
-                    'Your space, $username.',
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: -0.7,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    'Your conversations stay right here.',
-                    style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
-                  ),
-                  const SizedBox(height: 24),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.55),
-                      borderRadius: BorderRadius.circular(18),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(Icons.search_rounded, color: Theme.of(context).colorScheme.onSurfaceVariant),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            'Search conversations',
-                            style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 28),
-                  Row(
-                    children: [
-                      Text(
-                        'MESSAGES',
-                        style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 1.5,
-                        ),
-                      ),
-                      const Spacer(),
-                      if (!_loading)
-                        Text(
-                          '${_filteredConversations.length}',
-                          style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  if (_loading)
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 60),
-                      child: Center(child: CircularProgressIndicator()),
-                    )
-                  else if (_error != null)
-                    _StatusPanel(
-                      icon: Icons.cloud_off_rounded,
-                      title: 'Couldn’t load messages',
-                      message: _error!,
-                      actionLabel: 'Try again',
-                      onAction: _loadConversations,
-                    )
-                  else if (_filteredConversations.isEmpty)
-                    _StatusPanel(
-                      icon: Icons.forum_outlined,
-                      title: 'Your conversations start here',
-                      message: 'When you start a conversation, it will appear here. Pull down to refresh.',
-                      actionLabel: 'Refresh',
-                      onAction: _loadConversations,
-                    )
-                  else
-                    ..._filteredConversations.map((conversation) {
-                      final hasLastMessage = conversation.hasLastMessage;
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 10),
-                        child: Material(
-                          color: Theme.of(context).colorScheme.surfaceContainerLow,
-                          borderRadius: BorderRadius.circular(18),
-                          child: ListTile(
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                            leading: CircleAvatar(
-                              radius: 25,
-                              backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-                              child: Text(
-                                conversation.displayName.isNotEmpty
-                                    ? conversation.displayName.substring(0, 1).toUpperCase()
-                                    : '?',
-                                style: TextStyle(
-                                  color: Theme.of(context).colorScheme.onPrimaryContainer,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 18,
-                                ),
-                              ),
-                            ),
-                            title: Text(
-                              conversation.displayName,
-                              style: const TextStyle(fontWeight: FontWeight.w700),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            subtitle: hasLastMessage && conversation.lastMessagePreview.isNotEmpty
-                                ? Text(
-                              conversation.lastMessagePreview,
-                              style: TextStyle(
-                                color: Theme.of(context).colorScheme.onSurfaceVariant,
-                                fontSize: 13,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            )
-                                : Text(
-                              'No messages yet',
-                              style: TextStyle(
-                                color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.6),
-                                fontSize: 13,
-                              ),
-                            ),
-                            trailing: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              children: [
-                                if (conversation.lastMessageAt != null)
-                                  Text(
-                                    conversation.lastMessageTime,
-                                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                                    ),
-                                  ),
-                                const SizedBox(height: 2),
-                              ],
-                            ),
-                            onTap: () => _openConversation(conversation),
-                          ),
-                        ),
-                      );
-                    }),
-                ],
-              ),
-            ),
-            // Floating action button to start new conversation
-            if (!_loading && _error == null)
-              Align(
-                alignment: Alignment.bottomRight,
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: FloatingActionButton.extended(
-                    onPressed: _startNewConversation,
-                    icon: const Icon(Icons.person_add_rounded, size: 18),
-                    label: const Text('New conversation'),
-                    backgroundColor: Theme.of(context).colorScheme.primary,
-                    foregroundColor: Theme.of(context).colorScheme.onPrimary,
-                  ),
+    );
+  }
+
+  // ── Search bar for people, messages, and Councils ─────────────────────
+  Widget _buildSearchBar() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: MonacoDesign.lg),
+      child: TextField(
+        decoration: MonacoDesign.inputDecoration(
+          context: context,
+          label: 'Search',
+          hint: 'People, messages, Councils',
+          prefixIcon: Icons.search_rounded,
+        ),
+      ),
+    );
+  }
+
+  // ── Notes section: horizontal note bubbles ────────────────────────────
+  Widget _buildNotesSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: MonacoDesign.lg),
+          child: Row(
+            children: [
+              Text(
+                'Notes',
+                style: MonacoDesign.labelMedium(context).copyWith(
+                  color: MonacoDesign.textMuted,
                 ),
               ),
+              const Spacer(),
+              Text(
+                '${_conversations.length} active',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: MonacoDesign.textMuted,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: MonacoDesign.sm),
+        SizedBox(
+          height: 110,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: _conversations.length,
+            padding: const EdgeInsets.symmetric(horizontal: MonacoDesign.lg),
+            itemBuilder: (context, index) {
+              final conversation = _conversations[index];
+              return _buildNoteBubble(conversation);
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildNoteBubble(Conversation conversation) {
+    final name = conversation.displayName.isNotEmpty
+        ? conversation.displayName
+        : 'Note';
+    return Container(
+      width: 150,
+      margin: const EdgeInsets.only(right: MonacoDesign.md),
+      decoration: BoxDecoration(
+        color: MonacoDesign.charcoalCard,
+        borderRadius: BorderRadius.circular(MonacoDesign.radiusLg),
+        border: Border.all(color: MonacoDesign.borderMuted, width: 1),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(MonacoDesign.radiusLg),
+          onTap: () => _openConversation(conversation),
+          child: Padding(
+            padding: const EdgeInsets.all(MonacoDesign.md),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: MonacoDesign.charcoalElevated,
+                    borderRadius: BorderRadius.circular(MonacoDesign.radiusMd),
+                  ),
+                  child: Center(
+                    child: Text(
+                      name.isNotEmpty ? name.substring(0, 1).toUpperCase() : '?',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                        color: MonacoDesign.accentBright,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: MonacoDesign.md),
+                Text(
+                  name,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: MonacoDesign.textInk,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: MonacoDesign.xs),
+                if (conversation.hasLastMessage)
+                  Text(
+                    conversation.lastMessagePreview,
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: MonacoDesign.textSecondary,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  )
+                else
+                  Text(
+                    'No messages yet',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: MonacoDesign.textMuted.withOpacity(0.7),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ── Councils section: asymmetric mosaic layout ────────────────────────
+  Widget _buildCouncilsSection() {
+    if (_conversations.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(MonacoDesign.lg, MonacoDesign.lg, MonacoDesign.lg, MonacoDesign.sm),
+          child: Text(
+            'Councils',
+            style: MonacoDesign.labelMedium(context).copyWith(
+              color: MonacoDesign.textMuted,
+            ),
+          ),
+        ),
+        const SizedBox(height: MonacoDesign.sm),
+        _buildAsymmetricMosaic(),
+      ],
+    );
+  }
+
+  Widget _buildAsymmetricMosaic() {
+    final conversations = _conversations;
+
+    // Asymmetric mosaic: varied widths, heights, proportions
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final availableWidth = constraints.maxWidth;
+        return SingleChildScrollView(
+          child: Column(
+            children: [
+              // Row 1: Wide horizontal Council + Tall vertical Council
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Wide Council — 60% width, short height
+                  SizedBox(
+                    width: availableWidth * 0.60 - MonacoDesign.md,
+                    child: _buildCouncilCard(
+                      index: 0,
+                      style: CouncilStyle.wide,
+                    ),
+                  ),
+                  const SizedBox(width: MonacoDesign.md),
+                  // Tall Council — 40% width, tall height
+                  SizedBox(
+                    width: availableWidth * 0.40 - MonacoDesign.md,
+                    child: _buildCouncilCard(
+                      index: 1,
+                      style: CouncilStyle.tall,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: MonacoDesign.md),
+              // Row 2: Medium square + Small offset + Small offset
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(
+                    width: availableWidth * 0.45 - MonacoDesign.md,
+                    child: _buildCouncilCard(
+                      index: 2,
+                      style: CouncilStyle.medium,
+                    ),
+                  ),
+                  const SizedBox(width: MonacoDesign.md),
+                  SizedBox(
+                    width: availableWidth * 0.25 - MonacoDesign.md,
+                    child: _buildCouncilCard(
+                      index: 3,
+                      style: CouncilStyle.small,
+                    ),
+                  ),
+                  const SizedBox(width: MonacoDesign.md),
+                  SizedBox(
+                    width: availableWidth * 0.20 - MonacoDesign.md,
+                    child: _buildCouncilCard(
+                      index: 4,
+                      style: CouncilStyle.tiny,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildCouncilCard({required int index, required CouncilStyle style}) {
+    final conversation = index < _conversations.length
+        ? _conversations[index]
+        : null;
+
+    // Distinctive emblem per Council — varied silhouettes, no repeated square
+    final emblem = _buildCouncilEmblem(index);
+
+    return CouncilCard(
+      style: style,
+      emblem: emblem,
+      title: conversation?.displayName ?? 'Council ${index + 1}',
+      preview: conversation?.lastMessagePreview ?? 'No messages yet',
+      time: conversation?.lastMessageTime ?? '--:--',
+      onTap: () {
+        if (conversation != null) {
+          _openConversation(conversation);
+        }
+      },
+    );
+  }
+
+  Widget _buildCouncilEmblem(int index) {
+    // Each Council gets a distinctive emblem silhouette
+    switch (index % 5) {
+      case 0:
+        // Circle emblem — The Sovereign
+        return Container(
+          width: 48,
+          height: 48,
+          decoration: BoxDecoration(
+            color: MonacoDesign.charcoalElevated,
+            shape: BoxShape.circle,
+            border: Border.all(color: MonacoDesign.borderSubtle, width: 1),
+          ),
+          child: const Center(
+            child: Text(
+              'S',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w900,
+                color: MonacoDesign.accentBright,
+                letterSpacing: -1,
+              ),
+            ),
+          ),
+        );
+      case 1:
+        // Rounded square with accent border — The Chancellory
+        return Container(
+          width: 48,
+          height: 48,
+          decoration: BoxDecoration(
+            color: MonacoDesign.charcoalSurface,
+            borderRadius: BorderRadius.circular(MonacoDesign.radiusMd),
+            border: Border.all(color: MonacoDesign.inkBlack, width: 2),
+          ),
+          child: const Center(
+            child: Text(
+              'C',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w900,
+                color: MonacoDesign.accentBright,
+                letterSpacing: -1,
+              ),
+            ),
+          ),
+        );
+      case 2:
+        // Diamond shape — The Assembly
+        return Transform.rotate(
+          angle: 0.785, // 45 degrees
+          child: Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: MonacoDesign.charcoalCard,
+              borderRadius: BorderRadius.circular(MonacoDesign.radiusSm),
+              border: Border.all(color: MonacoDesign.borderMuted, width: 1),
+            ),
+            child: const Center(
+              child: Text(
+                'A',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                  color: MonacoDesign.textSecondary,
+                  letterSpacing: -1,
+                ),
+              ),
+            ),
+          ),
+        );
+      case 3:
+        // Vertical pill — The Syndicate
+        return Container(
+          width: 32,
+          height: 48,
+          decoration: BoxDecoration(
+            color: MonacoDesign.charcoalElevated,
+            borderRadius: BorderRadius.circular(MonacoDesign.radiusFull),
+            border: Border.all(color: MonacoDesign.borderMuted, width: 1),
+          ),
+          child: const Center(
+            child: Text(
+              'Y',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w900,
+                color: MonacoDesign.accentBright,
+              ),
+            ),
+          ),
+        );
+      case 4:
+        // Shield — The Guard
+        return Container(
+          width: 48,
+          height: 48,
+          decoration: BoxDecoration(
+            color: MonacoDesign.charcoalSurface,
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(MonacoDesign.radiusMd),
+              topRight: Radius.circular(MonacoDesign.radiusMd),
+              bottomLeft: Radius.circular(8),
+              bottomRight: Radius.circular(8),
+            ),
+            border: Border.all(color: MonacoDesign.borderMuted, width: 1),
+          ),
+          child: const Center(
+            child: Text(
+              'G',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w900,
+                color: MonacoDesign.textInk,
+                letterSpacing: -1,
+              ),
+            ),
+          ),
+        );
+      default:
+        return Container(
+          width: 48,
+          height: 48,
+          decoration: BoxDecoration(
+            color: MonacoDesign.charcoalCard,
+            borderRadius: BorderRadius.circular(MonacoDesign.radiusMd),
+          ),
+          child: const Center(
+            child: Text(
+              '?',
+              style: TextStyle(
+                fontSize: 16,
+                color: MonacoDesign.textMuted,
+              ),
+            ),
+          ),
+        );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: MonacoDesign.charcoalDeep,
+      appBar: AppBar(
+        backgroundColor: MonacoDesign.charcoalDeep,
+        elevation: 0,
+        automaticallyImplyLeading: false,
+        title: _buildHeader(),
+        toolbarHeight: 72,
+      ),
+      body: IndexedStack(
+        index: _selectedIndex,
+        children: [
+          // ── Chats ──────────────────────────────────────────────────────
+          _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : _error != null
+              ? _buildErrorPanel()
+              : SingleChildScrollView(
+                  padding: const EdgeInsets.only(bottom: MonacoDesign.lg),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildSearchBar(),
+                      const SizedBox(height: MonacoDesign.xl),
+                      _buildNotesSection(),
+                      const SizedBox(height: MonacoDesign.xxl),
+                      _buildCouncilsSection(),
+                    ],
+                  ),
+                ),
+          // ── Loading Chambers ───────────────────────────────────────────
+          const LoadingChambersScreenBody(),
+          // ── Profile ────────────────────────────────────────────────────
+          const ProfileScreenBody(),
+        ],
+      ),
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: MonacoDesign.charcoalSurface,
+          border: Border(
+            top: BorderSide(color: MonacoDesign.borderMuted, width: 1),
+          ),
+        ),
+        child: BottomNavigationBar(
+          currentIndex: _selectedIndex,
+          onTap: _onBottomNavTapped,
+          backgroundColor: MonacoDesign.charcoalSurface,
+          type: BottomNavigationBarType.fixed,
+          selectedItemColor: MonacoDesign.inkBlack,
+          unselectedItemColor: MonacoDesign.textMuted,
+          showSelectedLabels: true,
+          showUnselectedLabels: true,
+          items: [
+            BottomNavigationBarItem(
+              icon: const Icon(Icons.chat_bubble_outline_rounded, size: 24),
+              activeIcon: const Icon(Icons.chat_bubble_rounded, size: 24),
+              label: 'Chats',
+            ),
+            BottomNavigationBarItem(
+              icon: const Icon(Icons.history_rounded, size: 24),
+              activeIcon: const Icon(Icons.history_rounded, size: 24),
+              label: 'Loading Chambers',
+            ),
+            BottomNavigationBarItem(
+              icon: const Icon(Icons.person_outline_rounded, size: 24),
+              activeIcon: const Icon(Icons.person_rounded, size: 24),
+              label: 'Profile',
+            ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildErrorPanel() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 64,
+            height: 64,
+            decoration: BoxDecoration(
+              color: MonacoDesign.error.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.error_outline_rounded,
+              color: MonacoDesign.error,
+              size: 32,
+            ),
+          ),
+          const SizedBox(height: MonacoDesign.md),
+          Text(
+            'Couldn’t load Chats',
+            style: MonacoDesign.headlineMedium(context).copyWith(
+              fontWeight: FontWeight.w800,
+              color: MonacoDesign.textInk,
+            ),
+          ),
+          const SizedBox(height: MonacoDesign.sm),
+          Text(
+            _error ?? 'An unexpected error occurred.',
+            textAlign: TextAlign.center,
+            style: MonacoDesign.bodyMedium(context).copyWith(
+              color: MonacoDesign.textSecondary,
+            ),
+          ),
+          const SizedBox(height: MonacoDesign.lg),
+          FilledButton(
+            onPressed: _loadConversations,
+            style: MonacoDesign.primaryButton(context),
+            child: const Text('Try again'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Council visual styles for the asymmetric mosaic
+enum CouncilStyle {
+  wide,    // Wide horizontal card
+  tall,    // Tall vertical card
+  medium,  // Medium square card
+  small,   // Small card
+  tiny,    // Tiny card
+}
+
+/// Individual Council card with monochrome treatment
+class CouncilCard extends StatelessWidget {
+  final CouncilStyle style;
+  final Widget emblem;
+  final String title;
+  final String preview;
+  final String time;
+  final VoidCallback onTap;
+
+  const CouncilCard({
+    super.key,
+    required this.style,
+    required this.emblem,
+    required this.title,
+    required this.preview,
+    required this.time,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    // Height varies by style — asymmetric mosaic
+    double height;
+    switch (style) {
+      case CouncilStyle.wide:
+        height = 160;
+        break;
+      case CouncilStyle.tall:
+        height = 260;
+        break;
+      case CouncilStyle.medium:
+        height = 200;
+        break;
+      case CouncilStyle.small:
+        height = 140;
+        break;
+      case CouncilStyle.tiny:
+        height = 120;
+        break;
+    }
+
+    return Container(
+      height: height,
+      decoration: BoxDecoration(
+        color: MonacoDesign.charcoalCard,
+        borderRadius: BorderRadius.circular(MonacoDesign.radiusXl),
+        border: Border.all(color: MonacoDesign.borderMuted, width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: MonacoDesign.inkBlack.withOpacity(0.15),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(MonacoDesign.radiusXl),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.all(MonacoDesign.md),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                emblem,
+                const SizedBox(height: MonacoDesign.md),
+                Flexible(
+                  child: Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                      color: MonacoDesign.textInk,
+                    ),
+                    maxLines: style == CouncilStyle.tiny ? 1 : 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                const SizedBox(height: MonacoDesign.xs),
+                Flexible(
+                  child: Text(
+                    preview,
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: MonacoDesign.textSecondary,
+                    ),
+                    maxLines: style == CouncilStyle.tiny ? 1 : 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                const Spacer(),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      time,
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: MonacoDesign.textMuted,
+                      ),
+                    ),
+                    if (style != CouncilStyle.tiny)
+                      Icon(
+                        Icons.chevron_right_rounded,
+                        size: 18,
+                        color: MonacoDesign.textMuted,
+                      ),
+                  ],
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
   }
 }
 
-class _StatusPanel extends StatelessWidget {
-  const _StatusPanel({
-    required this.icon,
-    required this.title,
-    required this.message,
-    required this.actionLabel,
-    required this.onAction,
-  });
-
-  final IconData icon;
-  final String title;
-  final String message;
-  final String actionLabel;
-  final VoidCallback onAction;
+/// Loading Chambers inline body — used as a bottom-nav tab.
+/// The standalone LoadingChambersScreen remains available as a route.
+class LoadingChambersScreenBody extends StatelessWidget {
+  const LoadingChambersScreenBody({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    return Container(
-      margin: const EdgeInsets.only(top: 12),
-      padding: const EdgeInsets.fromLTRB(24, 30, 24, 26),
-      decoration: BoxDecoration(
-        color: colors.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: colors.outlineVariant.withOpacity(0.5)),
-      ),
+    return Center(
       child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-            width: 64,
-            height: 64,
-            decoration: BoxDecoration(color: colors.primaryContainer, shape: BoxShape.circle),
-            child: Icon(icon, size: 30, color: colors.onPrimaryContainer),
+            width: 72,
+            height: 72,
+            decoration: BoxDecoration(
+              color: MonacoDesign.charcoalSurface,
+              borderRadius: BorderRadius.circular(MonacoDesign.radiusLg),
+              border: Border.all(
+                color: MonacoDesign.borderSubtle,
+                width: 1,
+              ),
+            ),
+            child: const Icon(
+              Icons.history_rounded,
+              size: 32,
+              color: MonacoDesign.textSecondary,
+            ),
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: MonacoDesign.md),
           Text(
-            title,
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+            'Loading Chambers',
+            style: MonacoDesign.headlineMedium(context).copyWith(
+              fontWeight: FontWeight.w800,
+              color: MonacoDesign.textInk,
+            ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: MonacoDesign.sm),
           Text(
-            message,
+            'Historical archives.\nPlanned features coming soon.',
             textAlign: TextAlign.center,
-            style: TextStyle(height: 1.45, color: colors.onSurfaceVariant),
+            style: MonacoDesign.bodyMedium(context).copyWith(
+              color: MonacoDesign.textSecondary,
+              height: 1.6,
+            ),
           ),
-          const SizedBox(height: 20),
-          FilledButton.icon(
-            onPressed: onAction,
-            icon: const Icon(Icons.refresh_rounded),
-            label: Text(actionLabel),
+        ],
+      ),
+    );
+  }
+}
+
+/// Profile inline body — used as a bottom-nav tab.
+/// The standalone ProfileScreen remains available as a route.
+class ProfileScreenBody extends StatelessWidget {
+  const ProfileScreenBody({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 72,
+            height: 72,
+            decoration: BoxDecoration(
+              color: MonacoDesign.charcoalSurface,
+              borderRadius: BorderRadius.circular(MonacoDesign.radiusLg),
+              border: Border.all(
+                color: MonacoDesign.borderSubtle,
+                width: 1,
+              ),
+            ),
+            child: const Icon(
+              Icons.person_rounded,
+              size: 32,
+              color: MonacoDesign.textSecondary,
+            ),
+          ),
+          const SizedBox(height: MonacoDesign.md),
+          Text(
+            'Profile',
+            style: MonacoDesign.headlineMedium(context).copyWith(
+              fontWeight: FontWeight.w800,
+              color: MonacoDesign.textInk,
+            ),
+          ),
+          const SizedBox(height: MonacoDesign.sm),
+          Text(
+            'Identity and account settings.\nComing soon.',
+            textAlign: TextAlign.center,
+            style: MonacoDesign.bodyMedium(context).copyWith(
+              color: MonacoDesign.textSecondary,
+              height: 1.6,
+            ),
           ),
         ],
       ),
