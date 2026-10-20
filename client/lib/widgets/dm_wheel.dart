@@ -4,17 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:monaco/models/message.dart';
 import 'package:monaco/utils/design_system.dart';
 
-/// Edge position for the DM Quick-Access wheel.
-enum DMWheelEdge { left, right }
-
-/// Persisted DM Quick-Access wheel setting.
 enum DMWheelMode { off, left, right }
 
-/// A reusable semicircular DM Quick-Access wheel.
-///
-/// The wheel slides in from the selected screen edge and displays private
-/// DM contacts as circular avatars arranged along a curved arc. Tapping an
-/// avatar opens that user's direct conversation directly.
 class DMQuickAccessWheel extends StatefulWidget {
   final DMWheelMode mode;
   final List<Conversation> dms;
@@ -65,11 +56,7 @@ class _DMQuickAccessWheelState extends State<DMQuickAccessWheel>
   void didUpdateWidget(DMQuickAccessWheel oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.isOpen != oldWidget.isOpen) {
-      if (widget.isOpen) {
-        _openController.forward();
-      } else {
-        _openController.reverse();
-      }
+      widget.isOpen ? _openController.forward() : _openController.reverse();
     }
   }
 
@@ -81,11 +68,7 @@ class _DMQuickAccessWheelState extends State<DMQuickAccessWheel>
 
   void _toggle() {
     widget.onOpenChanged(!widget.isOpen);
-    if (widget.isOpen) {
-      _openController.forward();
-    } else {
-      _openController.reverse();
-    }
+    widget.isOpen ? _openController.forward() : _openController.reverse();
   }
 
   void _selectContact(Conversation dm) {
@@ -101,7 +84,6 @@ class _DMQuickAccessWheelState extends State<DMQuickAccessWheel>
         widget.mode == DMWheelMode.left ? pi / 2 : 3 * pi / 2;
     final angle = startAngle +
         (endAngle - startAngle) * index / (total - 1 > 0 ? total - 1 : 1);
-
     final radius = _innerRadius + (_wheelRadius - _innerRadius) * 0.5;
     return Offset(radius * cos(angle), radius * sin(angle));
   }
@@ -121,59 +103,68 @@ class _DMQuickAccessWheelState extends State<DMQuickAccessWheel>
     final safeArea = MediaQuery.of(context).padding;
     final isLeft = widget.mode == DMWheelMode.left;
 
-    return Positioned(
-      top: safeArea.top + 60.0,
-      left: isLeft ? -_wheelRadius * (1.0 - _openAnimation.value) : null,
-      right: !isLeft ? -_wheelRadius * (1.0 - _openAnimation.value) : null,
-      child: SizedBox(
-        width: _wheelRadius * 2,
-        height: _wheelRadius * 2,
-        child: Stack(
-          children: [
-            if (open > 0.1)
-              Positioned.fill(
-                child: IgnorePointer(
-                  ignoring: open < 0.5,
-                  child: Opacity(
-                    opacity: open * 0.3,
-                    child: Container(color: Colors.black.withOpacity(0.2)),
-                  ),
-                ),
-              ),
-            ClipPath(
-              clipper: _DMWheelClipper(edge: _edgeForClipper()),
-              child: Container(
-                width: _wheelRadius * 2,
-                height: _wheelRadius * 2,
-                decoration: BoxDecoration(
-                  color: MonacoDesign.charcoalSurface,
-                  border: Border.all(
-                    color: MonacoDesign.borderSubtle,
-                    width: 1,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: MonacoDesign.inkBlack.withOpacity(0.25),
-                      blurRadius: 20,
-                      offset: const Offset(0, 4),
+    return AnimatedBuilder(
+      animation: _openController,
+      builder: (context, child) {
+        final open = _openAnimation.value;
+        if (open == 0.0) return const SizedBox.shrink();
+
+        return Positioned(
+          top: safeArea.top + 60.0,
+          left: isLeft ? -_wheelRadius * (1.0 - open) : null,
+          right: !isLeft ? -_wheelRadius * (1.0 - open) : null,
+          child: SizedBox(
+            width: _wheelRadius * 2,
+            height: _wheelRadius * 2,
+            child: Stack(
+              children: [
+                if (open > 0.1)
+                  Positioned.fill(
+                    child: IgnorePointer(
+                      ignoring: open < 0.5,
+                      child: Opacity(
+                        opacity: open * 0.3,
+                        child: Container(color: Colors.black.withOpacity(0.2)),
+                      ),
                     ),
-                  ],
+                  ),
+                ClipPath(
+                  clipper: _DMWheelClipper(edge: _edgeForClipper()),
+                  child: Container(
+                    width: _wheelRadius * 2,
+                    height: _wheelRadius * 2,
+                    decoration: BoxDecoration(
+                      color: MonacoDesign.charcoalSurface,
+                      border: Border.all(
+                        color: MonacoDesign.borderSubtle,
+                        width: 1,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: MonacoDesign.inkBlack.withOpacity(0.25),
+                          blurRadius: 20,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: _buildWheelContent(),
+                  ),
                 ),
-                child: _buildWheelContent(),
+                if (!widget.isOpen)
+                  Transform.translate(
+                    offset: Offset(
+                      isLeft ? -_wheelRadius * (1.0 - open) : 0,
+                      !isLeft ? -_wheelRadius * (1.0 - open) : 0,
+                    ),
+                    child: SizedBox(
+                      width: _wheelRadius * 2,
+                      height: _wheelRadius * 2,
+                      child: _buildWheelContent(),
+                    ),
+                  ),
+                ],
               ),
-            if (!widget.isOpen)
-              Transform.translate(
-                offset: Offset(
-                  isLeft ? -_wheelRadius * (1.0 - open) : 0,
-                  !isLeft ? -_wheelRadius * (1.0 - open) : 0,
-                ),
-                child: SizedBox(
-                  width: _wheelRadius * 2,
-                  height: _wheelRadius * 2,
-                  child: _buildWheelContent(),
-                ),
-              ),
-            ],
+            ),
           ),
         );
       },
