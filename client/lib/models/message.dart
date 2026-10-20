@@ -164,4 +164,8 @@ class Conversation {
     final text = lastMessageText!;
     return '$sender: $text';
   }
+
+  /// Returns true when this conversation is a group/Council (more than 2
+  /// participants). A direct message has exactly 2 participants.
+  bool get isGroup => participants.length > 2;
 }
