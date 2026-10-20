@@ -69,7 +69,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: MonacoDesign.brandSurface,
+      backgroundColor: MonacoDesign.charcoalDeep,
       appBar: AppBar(
         title: const Text('Forgot Password'),
         backgroundColor: Colors.transparent,
@@ -91,13 +91,13 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   width: 72,
                   height: 72,
                   decoration: BoxDecoration(
-                    color: MonacoDesign.brandPrimary.withOpacity(0.1),
+                    color: MonacoDesign.inkBlack.withOpacity(0.1),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
                     Icons.lock_reset_rounded,
                     size: 36,
-                    color: MonacoDesign.brandPrimary,
+                    color: MonacoDesign.inkBlack,
                   ),
                 ),
                 const SizedBox(height: MonacoDesign.md),
@@ -106,7 +106,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   textAlign: TextAlign.center,
                   style: MonacoDesign.headlineLarge(context).copyWith(
                     fontWeight: FontWeight.w800,
-                    color: MonacoDesign.brandTextPrimary,
+                      color: MonacoDesign.textInk,
                   ),
                 ),
                 const SizedBox(height: MonacoDesign.sm),
@@ -114,7 +114,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   'Enter your email address and we will send you a link to reset your password.',
                   textAlign: TextAlign.center,
                   style: MonacoDesign.bodyMedium(context).copyWith(
-                    color: MonacoDesign.brandTextSecondary,
+                      color: MonacoDesign.textSecondary,
                     height: 1.5,
                   ),
                 ),
@@ -195,7 +195,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     textAlign: TextAlign.center,
                     style: MonacoDesign.headlineMedium(context).copyWith(
                       fontWeight: FontWeight.w800,
-                      color: MonacoDesign.brandTextPrimary,
+                    color: MonacoDesign.textInk,
                     ),
                   ),
                   const SizedBox(height: MonacoDesign.sm),
@@ -203,7 +203,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     'If an account exists with this email address, you will receive a password reset link. The link expires in 1 hour.',
                     textAlign: TextAlign.center,
                     style: MonacoDesign.bodyMedium(context).copyWith(
-                      color: MonacoDesign.brandTextSecondary,
+                    color: MonacoDesign.textSecondary,
                       height: 1.5,
                     ),
                   ),

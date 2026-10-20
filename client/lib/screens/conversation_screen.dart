@@ -167,7 +167,7 @@ class _ConversationScreenState extends State<ConversationScreen>
     final isMe = message.senderId == _currentUserId;
     final alignment = isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start;
     final bubbleColor = isMe
-        ? MonacoDesign.brandPrimary
+        ? MonacoDesign.inkBlack
         : Theme.of(context).colorScheme.surfaceContainerHighest;
     final textColor = isMe
         ? Colors.white
@@ -240,7 +240,7 @@ class _ConversationScreenState extends State<ConversationScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: MonacoDesign.brandSurface,
+      backgroundColor: MonacoDesign.charcoalDeep,
       appBar: AppBar(
         title: Text(
           widget.conversationTitle,
@@ -282,7 +282,7 @@ class _ConversationScreenState extends State<ConversationScreen>
                     'Couldn’t load messages',
                     style: MonacoDesign.headlineMedium(context).copyWith(
                       fontWeight: FontWeight.w800,
-                      color: MonacoDesign.brandTextPrimary,
+                      color: MonacoDesign.textInk,
                     ),
                   ),
                   const SizedBox(height: MonacoDesign.sm),
@@ -290,7 +290,7 @@ class _ConversationScreenState extends State<ConversationScreen>
                     _error!,
                     textAlign: TextAlign.center,
                     style: MonacoDesign.bodyMedium(context).copyWith(
-                      color: MonacoDesign.brandTextSecondary,
+                      color: MonacoDesign.textSecondary,
                     ),
                   ),
                   const SizedBox(height: MonacoDesign.lg),
@@ -362,7 +362,7 @@ class _ConversationScreenState extends State<ConversationScreen>
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(MonacoDesign.radiusFull),
-                    borderSide: BorderSide(color: MonacoDesign.brandPrimary, width: 1.5),
+                    borderSide: BorderSide(color: MonacoDesign.inkBlack, width: 1.5),
                   ),
                   filled: true,
                   fillColor: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
@@ -374,11 +374,11 @@ class _ConversationScreenState extends State<ConversationScreen>
             const SizedBox(width: MonacoDesign.sm),
             Container(
               decoration: BoxDecoration(
-                color: MonacoDesign.brandPrimary,
+                color: MonacoDesign.inkBlack,
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: MonacoDesign.brandPrimary.withOpacity(0.3),
+                    color: MonacoDesign.inkBlack.withOpacity(0.3),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),

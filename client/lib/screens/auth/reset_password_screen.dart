@@ -81,7 +81,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: MonacoDesign.brandSurface,
+      backgroundColor: MonacoDesign.charcoalDeep,
       appBar: AppBar(
         title: const Text('Reset Password'),
         backgroundColor: Colors.transparent,
@@ -103,13 +103,13 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                   width: 72,
                   height: 72,
                   decoration: BoxDecoration(
-                    color: MonacoDesign.brandPrimary.withOpacity(0.1),
+                    color: MonacoDesign.inkBlack.withOpacity(0.1),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
                     Icons.lock_outline_rounded,
                     size: 36,
-                    color: MonacoDesign.brandPrimary,
+                    color: MonacoDesign.inkBlack,
                   ),
                 ),
                 const SizedBox(height: MonacoDesign.md),
@@ -118,7 +118,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                   textAlign: TextAlign.center,
                   style: MonacoDesign.headlineLarge(context).copyWith(
                     fontWeight: FontWeight.w800,
-                    color: MonacoDesign.brandTextPrimary,
+                    color: MonacoDesign.textInk,
                   ),
                 ),
                 const SizedBox(height: MonacoDesign.sm),
@@ -126,7 +126,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                   'Choose a strong password for your Monaco account.',
                   textAlign: TextAlign.center,
                   style: MonacoDesign.bodyMedium(context).copyWith(
-                    color: MonacoDesign.brandTextSecondary,
+                    color: MonacoDesign.textSecondary,
                     height: 1.5,
                   ),
                 ),

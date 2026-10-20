@@ -73,7 +73,7 @@ class _MonacoLoaderState extends State<MonacoLoader>
     }
 
     return Scaffold(
-      backgroundColor: MonacoDesign.brandSurface,
+      backgroundColor: MonacoDesign.charcoalDeep,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -89,14 +89,14 @@ class _MonacoLoaderState extends State<MonacoLoader>
                     height: 110,
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
-                        colors: [MonacoDesign.brandPrimary, MonacoDesign.brandPrimaryDark],
+                        colors: [MonacoDesign.inkBlack, MonacoDesign.inkBlack],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
                       borderRadius: BorderRadius.circular(MonacoDesign.radiusXl),
                       boxShadow: [
                         BoxShadow(
-                          color: MonacoDesign.brandPrimary.withOpacity(0.4),
+                          color: MonacoDesign.inkBlack.withOpacity(0.4),
                           blurRadius: 20,
                           offset: const Offset(0, 10),
                         ),
@@ -122,14 +122,14 @@ class _MonacoLoaderState extends State<MonacoLoader>
               style: MonacoDesign.headlineLarge(context).copyWith(
                 fontWeight: FontWeight.w900,
                 letterSpacing: -1.2,
-                color: MonacoDesign.brandTextPrimary,
+                color: MonacoDesign.textInk,
               ),
             ),
             const SizedBox(height: MonacoDesign.sm),
             Text(
               'You\u2019ll be in Monaco Corp ASAP.',
               style: MonacoDesign.bodyLarge(context).copyWith(
-                color: MonacoDesign.brandTextSecondary,
+                color: MonacoDesign.textSecondary,
                 fontSize: 17,
                 height: 1.6,
               ),
@@ -141,8 +141,8 @@ class _MonacoLoaderState extends State<MonacoLoader>
               width: 200,
               height: 4,
               child: LinearProgressIndicator(
-                backgroundColor: MonacoDesign.brandPrimary.withOpacity(0.15),
-                valueColor: AlwaysStoppedAnimation<Color>(MonacoDesign.brandPrimary),
+                backgroundColor: MonacoDesign.inkBlack.withOpacity(0.15),
+                valueColor: AlwaysStoppedAnimation<Color>(MonacoDesign.inkBlack),
               ),
             ),
             if (widget.allowRetry && widget.onRetry != null) ...[
@@ -161,7 +161,7 @@ class _MonacoLoaderState extends State<MonacoLoader>
 
   Widget _buildErrorState(ColorScheme colors) {
     return Scaffold(
-      backgroundColor: MonacoDesign.brandSurface,
+      backgroundColor: MonacoDesign.charcoalDeep,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -184,14 +184,14 @@ class _MonacoLoaderState extends State<MonacoLoader>
               'Something went wrong',
               style: MonacoDesign.headlineMedium(context).copyWith(
                 fontWeight: FontWeight.w800,
-                color: MonacoDesign.brandTextPrimary,
+                color: MonacoDesign.textInk,
               ),
             ),
             const SizedBox(height: MonacoDesign.sm),
             Text(
               widget.error ?? 'An unexpected error occurred.',
               style: MonacoDesign.bodyMedium(context).copyWith(
-                color: MonacoDesign.brandTextSecondary,
+                color: MonacoDesign.textSecondary,
                 height: 1.6,
               ),
               textAlign: TextAlign.center,

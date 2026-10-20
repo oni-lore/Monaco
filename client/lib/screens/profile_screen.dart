@@ -215,7 +215,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final user = auth.user;
 
     return Scaffold(
-      backgroundColor: MonacoDesign.brandSurface,
+      backgroundColor: MonacoDesign.charcoalDeep,
       appBar: AppBar(
         title: const Text('Profile & Settings'),
         backgroundColor: Colors.transparent,
@@ -233,7 +233,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             // Profile header
             CircleAvatar(
               radius: 52,
-              backgroundColor: MonacoDesign.brandPrimary,
+              backgroundColor: MonacoDesign.inkBlack,
               child: Text(
                 (_username ?? user?.username ?? 'U').isNotEmpty
                     ? (_username ?? user!.username).substring(0, 1).toUpperCase()
@@ -250,14 +250,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
               _username ?? user?.username ?? 'Unknown',
               style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                 fontWeight: FontWeight.w800,
-                color: MonacoDesign.brandTextPrimary,
+                    color: MonacoDesign.textInk,
               ),
             ),
             const SizedBox(height: MonacoDesign.sm),
             Text(
               _email ?? user?.email ?? 'No email',
               style: MonacoDesign.bodyMedium(context).copyWith(
-                color: MonacoDesign.brandTextSecondary,
+                color: MonacoDesign.textSecondary,
               ),
             ),
             if (user?.emailVerified == true) ...[
@@ -382,7 +382,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         title,
         style: Theme.of(context).textTheme.labelLarge?.copyWith(
           fontWeight: FontWeight.w800,
-          color: MonacoDesign.brandTextSecondary,
+          color: MonacoDesign.textSecondary,
           letterSpacing: 1.2,
         ),
       ),
@@ -410,7 +410,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         borderRadius: BorderRadius.circular(MonacoDesign.radiusLg),
         border: Border.all(
           color: isEditing
-              ? MonacoDesign.brandPrimary
+              ? MonacoDesign.inkBlack
               : colors.outlineVariant.withOpacity(0.3),
           width: isEditing ? 2 : 1,
         ),
@@ -426,8 +426,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 Text(
                   label,
                   style: MonacoDesign.labelMedium(context).copyWith(
-                    color: MonacoDesign.brandTextSecondary,
+                    color: MonacoDesign.textSecondary,
                   ),
+                ),
                 ),
                 if (!isEditing)
                   TextButton(
@@ -505,13 +506,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
-                  color: MonacoDesign.brandTextPrimary,
+                color: MonacoDesign.textInk,
                 ),
               ),
               trailing: const Icon(
                 Icons.edit_rounded,
                 size: 20,
-                color: MonacoDesign.brandTextSecondary,
+                color: MonacoDesign.textSecondary,
               ),
               onTap: onEditToggle,
             ),
