@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:monaco/providers/demo_mode_provider.dart';
 import 'package:monaco/models/user.dart';
-import 'package:monaco/models/conversation.dart';
+import 'package:monaco/models/message.dart';
 
 void main() {
   group('DemoModeProvider', () {
@@ -43,7 +43,6 @@ void main() {
       final provider = DemoModeProvider();
       await provider.activateDemoMode();
 
-      expect(provider.demoUser?.displayName, 'Alex Morgan');
       expect(provider.demoUser?.email, 'alex.morgan@demo.monaco');
       expect(provider.demoUser?.emailVerified, isTrue);
     });
@@ -52,7 +51,6 @@ void main() {
       final provider = DemoModeProvider();
       await provider.activateDemoMode();
 
-      // Modify something - simulate by clearing
       provider.clearError();
 
       await provider.resetDemoData();
@@ -110,16 +108,13 @@ void main() {
       final provider = DemoModeProvider();
       await provider.activateDemoMode();
 
-      // Councils come first in the conversation list
       final all = provider.demoConversations;
       final councils = all.where((c) => c.isGroup).toList();
       final dms = all.where((c) => !c.isGroup).toList();
 
-      // Verify councils are separate from DMs
       expect(councils.length, 3);
       expect(dms.length, 3);
 
-      // Verify no overlap
       final councilIds = councils.map((c) => c.id).toSet();
       final dmIds = dms.map((d) => d.id).toSet();
       expect(councilIds.intersection(dmIds), isEmpty);

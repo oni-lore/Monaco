@@ -6,12 +6,9 @@ import 'package:monaco/providers/auth_provider.dart';
 import 'package:monaco/providers/demo_mode_provider.dart';
 import 'package:monaco/providers/dm_wheel_mode_provider.dart';
 import 'package:monaco/services/chat_api.dart';
-import 'package:monaco/models/conversation.dart';
+import 'package:monaco/models/message.dart';
 import 'package:monaco/models/message.dart';
 import 'package:monaco/screens/conversation_screen.dart';
-import 'package:monaco/screens/search_screen.dart';
-import 'package:monaco/screens/profile_screen.dart';
-import 'package:monaco/screens/loading_chambers_screen.dart';
 import 'package:monaco/utils/design_system.dart';
 import 'package:monaco/widgets/dm_wheel.dart';
 
@@ -181,12 +178,6 @@ class _HomeScreenState extends State<HomeScreen>
   void _onBottomNavTapped(int index) {
     setState(() {
       _selectedIndex = index;
-    });
-  }
-
-  void _toggleDMWheel() {
-    setState(() {
-      _dmWheelOpen = !_dmWheelOpen;
     });
   }
 

@@ -1,10 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:monaco/models/conversation.dart';
 import 'package:monaco/models/message.dart';
-import 'package:monaco/models/user.dart';
-import 'package:monaco/screens/conversation_screen.dart';
 import 'package:monaco/utils/design_system.dart';
 
 /// Edge position for the DM Quick-Access wheel.
@@ -59,7 +56,6 @@ class _DMQuickAccessWheelState extends State<DMQuickAccessWheel>
     with SingleTickerProviderStateMixin {
   late AnimationController _openController;
   late Animation<double> _openAnimation;
-  late Animation<double> _fadeAnimation;
 
   static const double _wheelRadius = 220.0;
   static const double _handleSize = 48.0;
@@ -76,10 +72,6 @@ class _DMQuickAccessWheelState extends State<DMQuickAccessWheel>
     _openAnimation = CurvedAnimation(
       parent: _openController,
       curve: Curves.easeOutCubic,
-    );
-    _fadeAnimation = CurvedAnimation(
-      parent: _openController,
-      curve: Curves.easeInOut,
     );
 
     if (widget.isOpen) {
@@ -123,15 +115,16 @@ class _DMQuickAccessWheelState extends State<DMQuickAccessWheel>
   /// Returns [dx, dy] relative to the wheel center.
   Offset _avatarPosition(int index, int total) {
     if (total == 0) return Offset.zero;
-    // Semicircle spans 180 degrees (pi radians).
-    // For left edge: arc spans from -pi/2 to pi/2 (right-facing semicircle)
-    // For right edge: arc spans from pi/2 to 3pi/2 (left-facing semicircle)
-    final startAngle = widget.mode == DMWheelEdge.left ? -pi / 2 : pi / 2;
-    final endAngle = widget.mode == DMWheelEdge.left ? pi / 2 : 3 * pi / 2;
+    final startAngle = widget.mode == DMWheelMode.left ? -pi / 2 : pi / 2;
+    final endAngle = widget.mode == DMWheelMode.left ? pi / 2 : 3 * pi / 2;
     final angle = startAngle + (endAngle - startAngle) * index / (total - 1 > 0 ? total - 1 : 1);
 
     final radius = _innerRadius + (_wheelRadius - _innerRadius) * 0.5;
     return Offset(radius * cos(angle), radius * sin(angle));
+  }
+
+  DMWheelEdge _getEdgeForClipper() {
+    return widget.mode == DMWheelMode.left ? DMWheelEdge.left : DMWheelEdge.right;
   }
 
   @override
@@ -140,9 +133,8 @@ class _DMQuickAccessWheelState extends State<DMQuickAccessWheel>
       return const SizedBox.shrink();
     }
 
-    final screenSize = MediaQuery.sizeOf(context);
     final safeArea = MediaQuery.of(context).padding;
-    final isLeft = widget.mode == DMWheelEdge.left;
+    final isLeft = widget.mode == DMWheelMode.left;
 
     return AnimatedBuilder(
       animation: _openController,
@@ -172,7 +164,7 @@ class _DMQuickAccessWheelState extends State<DMQuickAccessWheel>
                   ),
                 // The semicircular wheel container
                 ClipPath(
-                  clipper: _DMWheelClipper(edge: widget.mode),
+                  clipper: _DMWheelClipper(edge: _getEdgeForClipper()),
                   child: Container(
                     width: _wheelRadius * 2,
                     height: _wheelRadius * 2,
@@ -249,7 +241,6 @@ class _DMQuickAccessWheelState extends State<DMQuickAccessWheel>
       final username =
           otherParticipant?['username'] as String? ?? dm.displayName;
 
-      // Opacity animation for staggered appearance
       final appear = CurvedAnimation(
         parent: _openController,
         curve: Interval(0.1 + i * 0.05, 0.6, curve: Curves.easeOut),
@@ -327,7 +318,6 @@ class _DMWheelClipper extends CustomClipper<Path> {
     final radius = size.width / 2;
 
     if (edge == DMWheelEdge.left) {
-      // Right-facing semicircle: arc on the right, straight edge on the left
       path.moveTo(0, center.dy);
       path.arcToPoint(
         Offset(0, center.dy),
@@ -335,10 +325,8 @@ class _DMWheelClipper extends CustomClipper<Path> {
         largeArc: false,
         clockwise: false,
       );
-      // Close the straight edge
       path.lineTo(0, center.dy);
     } else {
-      // Left-facing semicircle: arc on the left, straight edge on the right
       path.moveTo(size.width, center.dy);
       path.arcToPoint(
         Offset(size.width, center.dy),

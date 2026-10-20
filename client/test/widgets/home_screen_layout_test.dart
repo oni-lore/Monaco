@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:provider/provider.dart';
 import 'package:monaco/providers/demo_mode_provider.dart';
+import 'package:monaco/models/message.dart';
 import 'package:monaco/screens/home_screen.dart';
-import 'package:monaco/models/conversation.dart';
-import 'package:monaco/models/user.dart';
 
 void main() {
   group('HomeScreen layout', () {
@@ -21,16 +21,9 @@ void main() {
 
       await tester.pumpAndSettle();
 
-      // Verify Monaco wordmark
       expect(find.text('Monaco'), findsOneWidget);
-
-      // Verify search bar
       expect(find.text('Search'), findsOneWidget);
-
-      // Verify Notes section
       expect(find.text('Notes'), findsOneWidget);
-
-      // Verify Councils section
       expect(find.text('Councils'), findsOneWidget);
     });
 
@@ -48,7 +41,6 @@ void main() {
 
       await tester.pumpAndSettle();
 
-      // Councils header should appear before Recent DM header
       expect(find.text('Councils'), findsOneWidget);
       expect(find.text('Recent DM'), findsOneWidget);
 
@@ -72,7 +64,6 @@ void main() {
 
       await tester.pumpAndSettle();
 
-      // Verify council names appear
       expect(find.text('The Design Council'), findsOneWidget);
       expect(find.text('Weekend people'), findsOneWidget);
       expect(find.text('Study Circle'), findsOneWidget);
@@ -111,7 +102,6 @@ void main() {
 
       await tester.pumpAndSettle();
 
-      // DM usernames should appear
       expect(find.text('maya_chen'), findsWidgets);
       expect(find.text('theo_reyes'), findsWidgets);
       expect(find.text('leo_tan'), findsWidgets);
@@ -131,7 +121,6 @@ void main() {
 
       await tester.pumpAndSettle();
 
-      // Only one Logout button in header (no Profile icon button)
       expect(find.byIcon(Icons.logout_rounded), findsOneWidget);
       expect(find.byIcon(Icons.person_rounded), findsNothing);
     });

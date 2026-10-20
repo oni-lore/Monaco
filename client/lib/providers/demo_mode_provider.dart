@@ -11,7 +11,7 @@ class DemoIdentity {
   static const String username = 'alexmorgan_demo';
   static const String email = 'alex.morgan@demo.monaco';
   static const String displayName = 'Alex Morgan';
-  static const String profilePictureUrl = null;
+  static const String? profilePictureUrl = null;
   static const bool isDemo = true;
 
   static User toUser() => User(
@@ -26,7 +26,7 @@ class DemoIdentity {
         isCreator: false,
       );
 
-  static AuthTokens toTokens() => const AuthTokens(
+  static AuthTokens toTokens() => AuthTokens(
         accessToken: 'demo-access-token-alex-morgan',
         refreshToken: 'demo-refresh-token-alex-morgan',
       );
@@ -107,7 +107,7 @@ class DemoUsers {
 
 /// Seeded demo conversations: Councils (3+ participants) and private DMs (2 participants).
 class DemoConversations {
-  static const now = DateTime(2026, 10, 20, 14, 30);
+  static final now = DateTime(2026, 10, 20, 14, 30);
 
   static const List<Map<String, dynamic>> councils = [
     {
@@ -296,7 +296,7 @@ class DemoModeProvider extends ChangeNotifier {
   List<Conversation> _demoConversations = [];
   List<Conversation> _demoCouncils = [];
   List<Conversation> _demoDMs = [];
-  String _error;
+  String? _error;
 
   bool get isDemoMode => _isDemoMode;
   User? get demoUser => _demoUser;
@@ -364,12 +364,20 @@ class DemoModeProvider extends ChangeNotifier {
 
   /// Get a demo user by ID.
   User? getDemoUserById(String id) {
-    return _demoUsers.firstWhere((u) => u.id == id, orElse: () => null);
+    try {
+      return _demoUsers.firstWhere((u) => u.id == id);
+    } on StateError {
+      return null;
+    }
   }
 
   /// Get a demo conversation by ID.
   Conversation? getDemoConversationById(String id) {
-    return _demoConversations.firstWhere((c) => c.id == id, orElse: () => null);
+    try {
+      return _demoConversations.firstWhere((c) => c.id == id);
+    } on StateError {
+      return null;
+    }
   }
 
   /// Check if a user ID is the demo user.
