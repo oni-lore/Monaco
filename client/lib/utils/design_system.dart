@@ -168,5 +168,9 @@ class MonacoDesign {
           color: textMuted.withOpacity(0.7),
           fontSize: 14,
         ),
+        style: TextStyle(
+          color: accentBright,
+          fontSize: 14,
+        ),
       );
 }

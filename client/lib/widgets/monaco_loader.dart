@@ -4,7 +4,7 @@ import '../utils/design_system.dart';
 /// Monaco Corp branded loading experience.
 ///
 /// Displays a premium, animated loading state with the message
-/// "You'll be in Monaco Corp ASAP." Used for app-entry and
+/// "Taking you to Monaco ASAP" used for app-entry and
 /// session-initialization waiting states.
 class MonacoLoader extends StatefulWidget {
   /// Whether the loader should allow retry on failure.
@@ -117,19 +117,19 @@ class _MonacoLoaderState extends State<MonacoLoader>
               },
             ),
             const SizedBox(height: MonacoDesign.lg),
-            Text(
-              'Monaco Corp',
-              style: MonacoDesign.headlineLarge(context).copyWith(
-                fontWeight: FontWeight.w900,
-                letterSpacing: -1.2,
-                color: MonacoDesign.textInk,
+              Text(
+                'Monaco Corp',
+                style: MonacoDesign.headlineLarge(context).copyWith(
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: -1.2,
+                  color: MonacoDesign.accentBright,
+                ),
               ),
-            ),
             const SizedBox(height: MonacoDesign.sm),
             Text(
-              'You\u2019ll be in Monaco Corp ASAP.',
+              'Taking you to Monaco ASAP',
               style: MonacoDesign.bodyLarge(context).copyWith(
-                color: MonacoDesign.textSecondary,
+                color: MonacoDesign.accentBright,
                 fontSize: 17,
                 height: 1.6,
               ),

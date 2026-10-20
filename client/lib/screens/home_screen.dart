@@ -139,20 +139,15 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(width: MonacoDesign.md),
           const Text(
-            'monaco',
+            'Monaco',
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.w900,
-              color: MonacoDesign.textInk,
+              color: MonacoDesign.accentBright,
               letterSpacing: -0.5,
             ),
           ),
           const Spacer(),
-          IconButton(
-            tooltip: 'Profile',
-            icon: const Icon(Icons.person_rounded, size: 24, color: MonacoDesign.textSecondary),
-            onPressed: () => _onBottomNavTapped(2),
-          ),
           IconButton(
             tooltip: 'Log out',
             icon: const Icon(Icons.logout_rounded, size: 24, color: MonacoDesign.textSecondary),
@@ -560,7 +555,7 @@ class _HomeScreenState extends State<HomeScreen> {
           onTap: _onBottomNavTapped,
           backgroundColor: MonacoDesign.charcoalSurface,
           type: BottomNavigationBarType.fixed,
-          selectedItemColor: MonacoDesign.inkBlack,
+          selectedItemColor: MonacoDesign.accentBright,
           unselectedItemColor: MonacoDesign.textMuted,
           showSelectedLabels: true,
           showUnselectedLabels: true,
