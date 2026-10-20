@@ -142,86 +142,53 @@ class _DMQuickAccessWheelState extends State<DMQuickAccessWheel>
         final open = _openAnimation.value;
         if (open == 0.0) return const SizedBox.shrink();
 
-        return Positioned(
-          top: safeArea.top + 60.0,
-          left: isLeft ? -_wheelRadius * (1.0 - open) : null,
-          right: !isLeft ? -_wheelRadius * (1.0 - open) : null,
-          child: SizedBox(
-            width: _wheelRadius * 2,
-            height: _wheelRadius * 2,
-            child: Stack(
-              children: [
-                // Fade overlay for outside-tap close
-                if (open > 0.1)
-                  Positioned.fill(
-                    child: IgnorePointer(
-                      ignoring: open < 0.5,
-                      child: Opacity(
-                        opacity: open * 0.3,
-                        child: Container(color: Colors.black.withOpacity(0.2)),
-                      ),
-                    ),
+        return Stack(
+          children: [
+            if (open > 0.1)
+              Positioned.fill(
+                child: IgnorePointer(
+                  ignoring: open < 0.5,
+                  child: Opacity(
+                    opacity: open * 0.3,
+                    child: Container(color: Colors.black.withOpacity(0.2)),
                   ),
-                // The semicircular wheel container
-                ClipPath(
-                  clipper: _DMWheelClipper(edge: _getEdgeForClipper()),
-                  child: Container(
+                ),
+              ),
+              ClipPath(
+                clipper: _DMWheelClipper(edge: _getEdgeForClipper()),
+                child: Container(
+                  width: _wheelRadius * 2,
+                  height: _wheelRadius * 2,
+                  decoration: BoxDecoration(
+                    color: MonacoDesign.charcoalSurface,
+                    border: Border.all(
+                      color: MonacoDesign.borderSubtle,
+                      width: 1,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: MonacoDesign.inkBlack.withOpacity(0.25),
+                        blurRadius: 20,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: _buildWheelContent(),
+                ),
+              if (!widget.isOpen)
+                Transform.translate(
+                  offset: Offset(
+                    isLeft ? -_wheelRadius * (1.0 - open) : 0,
+                    !isLeft ? -_wheelRadius * (1.0 - open) : 0,
+                  ),
+                  child: SizedBox(
                     width: _wheelRadius * 2,
                     height: _wheelRadius * 2,
-                    decoration: BoxDecoration(
-                      color: MonacoDesign.charcoalSurface,
-                      border: Border.all(
-                        color: MonacoDesign.borderSubtle,
-                        width: 1,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: MonacoDesign.inkBlack.withOpacity(0.25),
-                          blurRadius: 20,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
                     child: _buildWheelContent(),
                   ),
                 ),
-                // Edge activation handle
-                if (!widget.isOpen)
-                  Positioned(
-                    top: _handleSize / 2,
-                    left: isLeft ? 0 : null,
-                    right: !isLeft ? 0 : null,
-                    child: GestureDetector(
-                      onTap: _toggle,
-                      child: Container(
-                        width: _handleSize,
-                        height: _handleSize,
-                        decoration: BoxDecoration(
-                          color: MonacoDesign.charcoalElevated,
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: MonacoDesign.borderSubtle,
-                            width: 1,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: MonacoDesign.inkBlack.withOpacity(0.2),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: Icon(
-                          isLeft ? Icons.chevron_right_rounded : Icons.chevron_left_rounded,
-                          size: 20,
-                          color: MonacoDesign.accentBright,
-                        ),
-                      ),
-                    ),
-                  ),
               ],
             ),
-          ),
         );
       },
     );
