@@ -1,7 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:monaco/providers/demo_mode_provider.dart';
-import 'package:monaco/models/user.dart';
-import 'package:monaco/models/message.dart';
 
 void main() {
   group('DemoModeProvider', () {

@@ -293,11 +293,8 @@ class _DMQuickAccessWheelState extends State<DMQuickAccessWheel>
                   ),
                 ),
               ),
-            ),
-          ),
-        ),
-      );
-    }
+            );
+          }
 
     return Stack(
       children: children,

@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:monaco/providers/auth_provider.dart';
-import 'package:monaco/providers/demo_mode_provider.dart';
 import 'package:monaco/providers/dm_wheel_mode_provider.dart';
 import 'package:monaco/services/chat_api.dart';
 import 'package:monaco/utils/design_system.dart';

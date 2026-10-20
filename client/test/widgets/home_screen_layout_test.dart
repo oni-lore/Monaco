@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:monaco/providers/demo_mode_provider.dart';
-import 'package:monaco/models/message.dart';
 import 'package:monaco/screens/home_screen.dart';
 
 void main() {
