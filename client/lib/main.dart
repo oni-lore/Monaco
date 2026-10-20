@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:monaco/providers/auth_provider.dart';
+import 'package:monaco/providers/demo_mode_provider.dart';
 import 'package:monaco/screens/auth/login_screen.dart';
 import 'package:monaco/screens/auth/registration_screen.dart';
 import 'package:monaco/screens/auth/forgot_password_screen.dart';
@@ -19,12 +22,47 @@ void main() async {
   runApp(const MonacoApp());
 }
 
+/// Provides persisted DM Quick-Access wheel mode (Left / Right / Off).
+class DMWheelModeProvider extends ChangeNotifier {
+  static const String _prefsKey = 'dm_quick_access_mode';
+
+  DMWheelMode _mode = DMWheelMode.right;
+
+  DMWheelMode get mode => _mode;
+
+  DMWheelModeProvider() {
+    _loadMode();
+  }
+
+  Future<void> _loadMode() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_prefsKey);
+    _mode = raw != null ? DMWheelMode.values.firstWhere(
+      (e) => e.toString() == 'DMWheelMode.$raw',
+      orElse: () => DMWheelMode.right,
+    ) : DMWheelMode.right;
+    notifyListeners();
+  }
+
+  Future<void> setMode(DMWheelMode mode) async {
+    if (_mode == mode) return;
+    _mode = mode;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_prefsKey, mode.toString().split('.').last);
+    notifyListeners();
+  }
+}
+
 class MonacoApp extends StatelessWidget {
   const MonacoApp({super.key});
 
   @override
-  Widget build(BuildContext context) => ChangeNotifierProvider(
-    create: (BuildContext _) => AuthProvider(),
+  Widget build(BuildContext context) => MultiProvider(
+    providers: [
+      ChangeNotifierProvider(create: (BuildContext _) => AuthProvider()),
+      ChangeNotifierProvider(create: (BuildContext _) => DemoModeProvider()),
+      ChangeNotifierProvider(create: (BuildContext _) => DMWheelModeProvider()),
+    ],
     child: MaterialApp(
       title: 'Monaco',
       debugShowCheckedModeBanner: false,

@@ -2,6 +2,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:monaco/providers/auth_provider.dart';
+import 'package:monaco/providers/demo_mode_provider.dart';
+import 'package:monaco/providers/dm_wheel_mode_provider.dart';
 import 'package:monaco/services/chat_api.dart';
 import 'package:monaco/utils/design_system.dart';
 import 'package:monaco/widgets/monaco_loader.dart';
@@ -367,6 +369,50 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ],
                       ),
               ),
+            ),
+            const SizedBox(height: MonacoDesign.xxl),
+
+            // DM Quick Access section
+            _buildSectionHeader('DM Quick Access'),
+            const SizedBox(height: MonacoDesign.sm),
+            Consumer<DMWheelModeProvider>(
+              builder: (context, wheelProvider, _) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    ListTile(
+                      leading: Radio<DMWheelMode>(
+                        value: DMWheelMode.off,
+                        groupValue: wheelProvider.mode,
+                        onChanged: (v) => wheelProvider.setMode(v!),
+                        activeColor: MonacoDesign.inkBlack,
+                      ),
+                      title: const Text('Off'),
+                      subtitle: const Text('DM wheel disabled'),
+                    ),
+                    ListTile(
+                      leading: Radio<DMWheelMode>(
+                        value: DMWheelMode.left,
+                        groupValue: wheelProvider.mode,
+                        onChanged: (v) => wheelProvider.setMode(v!),
+                        activeColor: MonacoDesign.inkBlack,
+                      ),
+                      title: const Text('Left edge'),
+                      subtitle: const Text('Wheel opens from left side'),
+                    ),
+                    ListTile(
+                      leading: Radio<DMWheelMode>(
+                        value: DMWheelMode.right,
+                        groupValue: wheelProvider.mode,
+                        onChanged: (v) => wheelProvider.setMode(v!),
+                        activeColor: MonacoDesign.inkBlack,
+                      ),
+                      title: const Text('Right edge'),
+                      subtitle: const Text('Wheel opens from right side'),
+                    ),
+                  ],
+                );
+              },
             ),
             const SizedBox(height: MonacoDesign.xxl),
           ],

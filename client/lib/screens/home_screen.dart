@@ -1,10 +1,19 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:monaco/providers/auth_provider.dart';
+import 'package:monaco/providers/demo_mode_provider.dart';
+import 'package:monaco/providers/dm_wheel_mode_provider.dart';
 import 'package:monaco/services/chat_api.dart';
+import 'package:monaco/models/conversation.dart';
 import 'package:monaco/models/message.dart';
 import 'package:monaco/screens/conversation_screen.dart';
+import 'package:monaco/screens/search_screen.dart';
+import 'package:monaco/screens/profile_screen.dart';
+import 'package:monaco/screens/loading_chambers_screen.dart';
 import 'package:monaco/utils/design_system.dart';
+import 'package:monaco/widgets/dm_wheel.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -13,29 +22,63 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen>
+    with WidgetsBindingObserver {
   final ChatApiService _api = ChatApiService();
   List<Conversation> _conversations = [];
   List<Conversation> get _councils =>
       _conversations.where((c) => c.isGroup).toList();
+  List<Conversation> get _dms =>
+      _conversations.where((c) => !c.isGroup).toList()
+        ..sort((a, b) {
+          final aTime = a.lastMessageAt ?? DateTime(1970);
+          final bTime = b.lastMessageAt ?? DateTime(1970);
+          return bTime.compareTo(aTime);
+        });
+
   bool _isLoading = true;
   String? _error;
   int _selectedIndex = 0;
 
+  // DM Quick-Access wheel open/close state (local to this screen)
+  bool _dmWheelOpen = false;
+
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _loadConversations();
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused && _dmWheelOpen) {
+      setState(() {
+        _dmWheelOpen = false;
+      });
+    }
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _api.dispose();
     super.dispose();
   }
 
   Future<void> _loadConversations() async {
     final auth = context.read<AuthProvider>();
+    final demoMode = context.read<DemoModeProvider>();
+
+    if (demoMode.isDemoMode) {
+      setState(() {
+        _conversations = demoMode.demoConversations;
+        _isLoading = false;
+        _error = null;
+      });
+      return;
+    }
+
     final token = auth.tokens?.accessToken;
     if (token == null) {
       setState(() {
@@ -69,6 +112,27 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _openConversation(Conversation conversation) async {
+    if (_dmWheelOpen) {
+      setState(() {
+        _dmWheelOpen = false;
+      });
+    }
+
+    final demoMode = context.read<DemoModeProvider>();
+    if (demoMode.isDemoMode) {
+      if (mounted) {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => ConversationScreen(
+              conversationId: conversation.id,
+              conversationTitle: conversation.displayName,
+            ),
+          ),
+        );
+      }
+      return;
+    }
+
     final auth = context.read<AuthProvider>();
     final token = auth.tokens?.accessToken;
     if (token == null) return;
@@ -99,6 +163,15 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _logout() async {
+    final demoMode = context.read<DemoModeProvider>();
+    if (demoMode.isDemoMode) {
+      await demoMode.deactivateDemoMode();
+      if (mounted) {
+        Navigator.of(context).pushNamedAndRemoveUntil('/login', (_) => false);
+      }
+      return;
+    }
+
     await context.read<AuthProvider>().logout();
     if (mounted) {
       Navigator.of(context).pushNamedAndRemoveUntil('/login', (_) => false);
@@ -108,6 +181,12 @@ class _HomeScreenState extends State<HomeScreen> {
   void _onBottomNavTapped(int index) {
     setState(() {
       _selectedIndex = index;
+    });
+  }
+
+  void _toggleDMWheel() {
+    setState(() {
+      _dmWheelOpen = !_dmWheelOpen;
     });
   }
 
@@ -258,87 +337,101 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
         const SizedBox(height: MonacoDesign.sm),
-        _buildAsymmetricMosaic(),
+        _buildResponsiveCouncilMosaic(),
       ],
     );
   }
 
-  Widget _buildAsymmetricMosaic() {
+  Widget _buildResponsiveCouncilMosaic() {
     final councils = _councils;
+    if (councils.isEmpty) return const SizedBox.shrink();
 
-    // Asymmetric mosaic: varied widths, heights, proportions
     return LayoutBuilder(
       builder: (context, constraints) {
         final availableWidth = constraints.maxWidth;
+        final isNarrow = availableWidth < 360;
+
         return SingleChildScrollView(
           child: Column(
             children: [
-              // Row 1: Wide horizontal Council + Tall vertical Council
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Wide Council — 60% width, short height
-                  if (councils.isNotEmpty)
-                    SizedBox(
-                      width: availableWidth * 0.60 - MonacoDesign.md,
+              if (isNarrow) ...[
+                for (int i = 0; i < councils.length; i++)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: MonacoDesign.md),
+                    child: SizedBox(
+                      width: double.infinity,
+                      height: 160,
                       child: _buildCouncilCard(
-                        index: 0,
-                        council: councils[0],
-                        style: CouncilStyle.wide,
+                        index: i,
+                        council: councils[i],
+                        style: CouncilStyle.medium,
                       ),
                     ),
-                  const SizedBox(width: MonacoDesign.md),
-                  // Tall Council — 40% width, tall height
-                  if (councils.length > 1)
-                    SizedBox(
-                      width: availableWidth * 0.40 - MonacoDesign.md,
-                      child: _buildCouncilCard(
-                        index: 1,
-                        council: councils[1],
-                        style: CouncilStyle.tall,
+                  ),
+              ] else ...[
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (councils.isNotEmpty)
+                      SizedBox(
+                        width: availableWidth * 0.60 - MonacoDesign.md,
+                        child: _buildCouncilCard(
+                          index: 0,
+                          council: councils[0],
+                          style: CouncilStyle.wide,
+                        ),
                       ),
+                    const SizedBox(width: MonacoDesign.md),
+                    if (councils.length > 1)
+                      SizedBox(
+                        width: availableWidth * 0.40 - MonacoDesign.md,
+                        child: _buildCouncilCard(
+                          index: 1,
+                          council: councils[1],
+                          style: CouncilStyle.tall,
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: MonacoDesign.md),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(
+                      width: availableWidth * 0.45 - MonacoDesign.md,
+                      child: councils.length > 2
+                          ? _buildCouncilCard(
+                              index: 2,
+                              council: councils[2],
+                              style: CouncilStyle.medium,
+                            )
+                          : const SizedBox.shrink(),
                     ),
-                ],
-              ),
-              const SizedBox(height: MonacoDesign.md),
-              // Row 2: Medium square + Small offset + Small offset
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SizedBox(
-                    width: availableWidth * 0.45 - MonacoDesign.md,
-                    child: councils.length > 2
-                        ? _buildCouncilCard(
-                            index: 2,
-                            council: councils[2],
-                            style: CouncilStyle.medium,
-                          )
-                        : const SizedBox.shrink(),
-                  ),
-                  const SizedBox(width: MonacoDesign.md),
-                  SizedBox(
-                    width: availableWidth * 0.25 - MonacoDesign.md,
-                    child: councils.length > 3
-                        ? _buildCouncilCard(
-                            index: 3,
-                            council: councils[3],
-                            style: CouncilStyle.small,
-                          )
-                        : const SizedBox.shrink(),
-                  ),
-                  const SizedBox(width: MonacoDesign.md),
-                  SizedBox(
-                    width: availableWidth * 0.20 - MonacoDesign.md,
-                    child: councils.length > 4
-                        ? _buildCouncilCard(
-                            index: 4,
-                            council: councils[4],
-                            style: CouncilStyle.tiny,
-                          )
-                        : const SizedBox.shrink(),
-                  ),
-                ],
-              ),
+                    const SizedBox(width: MonacoDesign.md),
+                    SizedBox(
+                      width: availableWidth * 0.25 - MonacoDesign.md,
+                      child: councils.length > 3
+                          ? _buildCouncilCard(
+                              index: 3,
+                              council: councils[3],
+                              style: CouncilStyle.small,
+                            )
+                          : const SizedBox.shrink(),
+                    ),
+                    const SizedBox(width: MonacoDesign.md),
+                    SizedBox(
+                      width: availableWidth * 0.20 - MonacoDesign.md,
+                      child: councils.length > 4
+                          ? _buildCouncilCard(
+                              index: 4,
+                              council: councils[4],
+                              style: CouncilStyle.tiny,
+                            )
+                          : const SizedBox.shrink(),
+                    ),
+                  ],
+                ),
+              ],
             ],
           ),
         );
@@ -351,7 +444,6 @@ class _HomeScreenState extends State<HomeScreen> {
     required Conversation council,
     required CouncilStyle style,
   }) {
-    // Distinctive emblem per Council — varied silhouettes, no repeated square
     final emblem = _buildCouncilEmblem(index);
 
     return CouncilCard(
@@ -365,10 +457,8 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildCouncilEmblem(int index) {
-    // Each Council gets a distinctive emblem silhouette
     switch (index % 5) {
       case 0:
-        // Circle emblem — The Sovereign
         return Container(
           width: 48,
           height: 48,
@@ -390,7 +480,6 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         );
       case 1:
-        // Rounded square with accent border — The Chancellory
         return Container(
           width: 48,
           height: 48,
@@ -412,9 +501,8 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         );
       case 2:
-        // Diamond shape — The Assembly
         return Transform.rotate(
-          angle: 0.785, // 45 degrees
+          angle: 0.785,
           child: Container(
             width: 40,
             height: 40,
@@ -437,7 +525,6 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         );
       case 3:
-        // Vertical pill — The Syndicate
         return Container(
           width: 32,
           height: 48,
@@ -458,7 +545,6 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         );
       case 4:
-        // Shield — The Guard
         return Container(
           width: 48,
           height: 48,
@@ -505,8 +591,151 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  // ── Recent DM previews section ────────────────────────────────────────
+  Widget _buildRecentDMSection() {
+    final dms = _dms;
+    if (dms.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(MonacoDesign.lg, MonacoDesign.lg, MonacoDesign.lg, MonacoDesign.sm),
+          child: Row(
+            children: [
+              Text(
+                'Recent DM',
+                style: MonacoDesign.labelMedium(context).copyWith(
+                  color: MonacoDesign.textMuted,
+                ),
+              ),
+              const Spacer(),
+              GestureDetector(
+                onTap: () {},
+                child: Text(
+                  'See all',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: MonacoDesign.accentSoft,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: MonacoDesign.sm),
+        SizedBox(
+          height: 96,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: dms.length,
+            padding: const EdgeInsets.symmetric(horizontal: MonacoDesign.lg),
+            itemBuilder: (context, index) {
+              final dm = dms[index];
+              return _buildDMPreviewCard(dm);
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDMPreviewCard(Conversation dm) {
+    final otherParticipant = dm.otherParticipant;
+    final username = otherParticipant?['username'] as String? ?? 'Unknown';
+
+    return Container(
+      width: 210,
+      margin: const EdgeInsets.only(right: MonacoDesign.md),
+      decoration: BoxDecoration(
+        color: MonacoDesign.charcoalCard,
+        borderRadius: BorderRadius.circular(MonacoDesign.radiusLg),
+        border: Border.all(color: MonacoDesign.borderMuted, width: 1),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(MonacoDesign.radiusLg),
+          onTap: () => _openConversation(dm),
+          child: Padding(
+            padding: const EdgeInsets.all(MonacoDesign.md),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: MonacoDesign.charcoalElevated,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Center(
+                        child: Text(
+                          username.isNotEmpty
+                              ? username.substring(0, 1).toUpperCase()
+                              : '?',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                            color: MonacoDesign.accentBright,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: MonacoDesign.sm),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            username,
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                              color: MonacoDesign.textInk,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: MonacoDesign.xs),
+                          Text(
+                            dm.hasLastMessage ? dm.lastMessagePreview : 'No messages yet',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: MonacoDesign.textSecondary,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (dm.lastMessageAt != null)
+                      Text(
+                        dm.lastMessageTime,
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: MonacoDesign.textMuted,
+                        ),
+                      ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final dmWheelMode = context.watch<DMWheelModeProvider>().mode;
+
     return Scaffold(
       backgroundColor: MonacoDesign.charcoalDeep,
       appBar: AppBar(
@@ -516,31 +745,51 @@ class _HomeScreenState extends State<HomeScreen> {
         title: _buildHeader(),
         toolbarHeight: 72,
       ),
-      body: IndexedStack(
-        index: _selectedIndex,
+      body: Stack(
         children: [
-          // ── Chats ──────────────────────────────────────────────────────
-          _isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : _error != null
-              ? _buildErrorPanel()
-              : SingleChildScrollView(
-                  padding: const EdgeInsets.only(bottom: MonacoDesign.lg),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildSearchBar(),
-                      const SizedBox(height: MonacoDesign.xl),
-                      _buildNotesSection(),
-                      const SizedBox(height: MonacoDesign.xxl),
-                      _buildCouncilsSection(),
-                    ],
-                  ),
-                ),
-          // ── Loading Chambers ───────────────────────────────────────────
-          const LoadingChambersScreenBody(),
-          // ── Profile ────────────────────────────────────────────────────
-          const ProfileScreenBody(),
+          IndexedStack(
+            index: _selectedIndex,
+            children: [
+              // ── Chats ──────────────────────────────────────────────────────
+              _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : _error != null
+                  ? _buildErrorPanel()
+                  : SafeArea(
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.only(bottom: MonacoDesign.lg + 16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildSearchBar(),
+                            const SizedBox(height: MonacoDesign.xl),
+                            _buildNotesSection(),
+                            const SizedBox(height: MonacoDesign.xxl),
+                            _buildCouncilsSection(),
+                            const SizedBox(height: MonacoDesign.xxl),
+                            _buildRecentDMSection(),
+                          ],
+                        ),
+                      ),
+                    ),
+              // ── Loading Chambers ───────────────────────────────────────────
+              const LoadingChambersScreenBody(),
+              // ── Profile ────────────────────────────────────────────────────
+              const ProfileScreenBody(),
+            ],
+          ),
+          // DM Quick-Access wheel overlay (only on Chats tab)
+          if (_selectedIndex == 0 && dmWheelMode != DMWheelMode.off)
+            DMQuickAccessWheel(
+              mode: dmWheelMode,
+              dms: _dms,
+              onContactSelected: (conversationId) {
+                final dm = _dms.firstWhere((d) => d.id == conversationId);
+                _openConversation(dm);
+              },
+              isOpen: _dmWheelOpen,
+              onOpenChanged: (open) => setState(() => _dmWheelOpen = open),
+            ),
         ],
       ),
       bottomNavigationBar: Container(
@@ -657,7 +906,6 @@ class CouncilCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Height varies by style — asymmetric mosaic
     double height;
     switch (style) {
       case CouncilStyle.wide:
@@ -756,7 +1004,6 @@ class CouncilCard extends StatelessWidget {
 }
 
 /// Loading Chambers inline body — used as a bottom-nav tab.
-/// The standalone LoadingChambersScreen remains available as a route.
 class LoadingChambersScreenBody extends StatelessWidget {
   const LoadingChambersScreenBody({super.key});
 
@@ -807,7 +1054,6 @@ class LoadingChambersScreenBody extends StatelessWidget {
 }
 
 /// Profile inline body — used as a bottom-nav tab.
-/// The standalone ProfileScreen remains available as a route.
 class ProfileScreenBody extends StatelessWidget {
   const ProfileScreenBody({super.key});
 
