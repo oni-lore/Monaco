@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -15,7 +13,6 @@ import 'package:monaco/screens/conversation_screen.dart';
 import 'package:monaco/screens/search_screen.dart';
 import 'package:monaco/screens/profile_screen.dart';
 import 'package:monaco/screens/loading_chambers_screen.dart';
-import 'package:monaco/widgets/dm_wheel.dart';
 import 'package:monaco/widgets/monaco_loader.dart';
 
 void main() async {

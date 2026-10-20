@@ -231,15 +231,12 @@ class _DMQuickAccessWheelState extends State<DMQuickAccessWheel>
     final dms = widget.dms;
     if (dms.isEmpty) return const SizedBox.shrink();
 
-    final center = Offset(_wheelRadius, _wheelRadius);
     final children = <Widget>[];
 
     for (int i = 0; i < dms.length; i++) {
       final dm = dms[i];
-      final pos = _avatarPosition(i, dms.length);
-      final otherParticipant = dm.otherParticipant;
       final username =
-          otherParticipant?['username'] as String? ?? dm.displayName;
+          dm.otherParticipant?['username'] as String? ?? dm.displayName;
 
       children.add(
         Container(
