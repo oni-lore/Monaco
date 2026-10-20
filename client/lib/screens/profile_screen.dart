@@ -428,8 +428,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   style: MonacoDesign.labelMedium(context).copyWith(
                     color: MonacoDesign.textSecondary,
                   ),
-                ),
-                ),
+                  ),
                 if (!isEditing)
                   TextButton(
                     onPressed: onEditToggle,

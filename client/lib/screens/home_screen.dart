@@ -4,9 +4,6 @@ import 'package:monaco/providers/auth_provider.dart';
 import 'package:monaco/services/chat_api.dart';
 import 'package:monaco/models/message.dart';
 import 'package:monaco/screens/conversation_screen.dart';
-import 'package:monaco/screens/search_screen.dart';
-import 'package:monaco/screens/profile_screen.dart';
-import 'package:monaco/screens/loading_chambers_screen.dart';
 import 'package:monaco/utils/design_system.dart';
 
 class HomeScreen extends StatefulWidget {

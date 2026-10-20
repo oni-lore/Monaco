@@ -332,7 +332,7 @@ class _ConversationScreenState extends State<ConversationScreen>
     return Container(
       padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
       decoration: BoxDecoration(
-        color: MonacoDesign.brandCard,
+        color: MonacoDesign.charcoalCard,
         border: Border(
           top: BorderSide(color: Theme.of(context).colorScheme.outlineVariant.withOpacity(0.3), width: 1),
         ),
