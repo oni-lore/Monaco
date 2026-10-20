@@ -15,28 +15,11 @@ enum DMWheelMode { off, left, right }
 /// The wheel slides in from the selected screen edge and displays private
 /// DM contacts as circular avatars arranged along a curved arc. Tapping an
 /// avatar opens that user's direct conversation directly.
-///
-/// The wheel:
-/// - Is exclusively for private DMs (no Councils or groups)
-/// - Respects device safe areas and available screen dimensions
-/// - Closes on outside tap or Back button
-/// - Restores underlying screen scroll position when closed
-/// - Is available on Chats, Loading Chambers, DM conversations, and
-///   Council conversations (not on Profile, Settings, or Notifications)
 class DMQuickAccessWheel extends StatefulWidget {
-  /// Whether the wheel is enabled.
   final DMWheelMode mode;
-
-  /// The demo/demo-mode conversations to show in the wheel.
   final List<Conversation> dms;
-
-  /// Callback when a DM contact is tapped. Receives the conversation ID.
   final ValueSetter<String> onContactSelected;
-
-  /// Whether the wheel is currently open.
   final bool isOpen;
-
-  /// Callback when the open/closed state changes.
   final ValueChanged<bool> onOpenChanged;
 
   const DMQuickAccessWheel({
@@ -73,7 +56,6 @@ class _DMQuickAccessWheelState extends State<DMQuickAccessWheel>
       parent: _openController,
       curve: Curves.easeOutCubic,
     );
-
     if (widget.isOpen) {
       _openController.value = 1.0;
     }
@@ -100,9 +82,9 @@ class _DMQuickAccessWheelState extends State<DMQuickAccessWheel>
   void _toggle() {
     widget.onOpenChanged(!widget.isOpen);
     if (widget.isOpen) {
-      _openController.reverse();
-    } else {
       _openController.forward();
+    } else {
+      _openController.reverse();
     }
   }
 
@@ -111,20 +93,23 @@ class _DMQuickAccessWheelState extends State<DMQuickAccessWheel>
     _toggle();
   }
 
-  /// Compute the avatar position along the semicircular arc.
-  /// Returns [dx, dy] relative to the wheel center.
   Offset _avatarPosition(int index, int total) {
     if (total == 0) return Offset.zero;
-    final startAngle = widget.mode == DMWheelMode.left ? -pi / 2 : pi / 2;
-    final endAngle = widget.mode == DMWheelMode.left ? pi / 2 : 3 * pi / 2;
-    final angle = startAngle + (endAngle - startAngle) * index / (total - 1 > 0 ? total - 1 : 1);
+    final startAngle =
+        widget.mode == DMWheelMode.left ? -pi / 2 : pi / 2;
+    final endAngle =
+        widget.mode == DMWheelMode.left ? pi / 2 : 3 * pi / 2;
+    final angle = startAngle +
+        (endAngle - startAngle) * index / (total - 1 > 0 ? total - 1 : 1);
 
     final radius = _innerRadius + (_wheelRadius - _innerRadius) * 0.5;
     return Offset(radius * cos(angle), radius * sin(angle));
   }
 
-  DMWheelEdge _getEdgeForClipper() {
-    return widget.mode == DMWheelMode.left ? DMWheelEdge.left : DMWheelEdge.right;
+  DMWheelEdge _edgeForClipper() {
+    return widget.mode == DMWheelMode.left
+        ? DMWheelEdge.left
+        : DMWheelEdge.right;
   }
 
   @override
@@ -136,13 +121,14 @@ class _DMQuickAccessWheelState extends State<DMQuickAccessWheel>
     final safeArea = MediaQuery.of(context).padding;
     final isLeft = widget.mode == DMWheelMode.left;
 
-    return AnimatedBuilder(
-      animation: _openController,
-      builder: (context, child) {
-        final open = _openAnimation.value;
-        if (open == 0.0) return const SizedBox.shrink();
-
-        return Stack(
+    return Positioned(
+      top: safeArea.top + 60.0,
+      left: isLeft ? -_wheelRadius * (1.0 - _openAnimation.value) : null,
+      right: !isLeft ? -_wheelRadius * (1.0 - _openAnimation.value) : null,
+      child: SizedBox(
+        width: _wheelRadius * 2,
+        height: _wheelRadius * 2,
+        child: Stack(
           children: [
             if (open > 0.1)
               Positioned.fill(
@@ -154,41 +140,41 @@ class _DMQuickAccessWheelState extends State<DMQuickAccessWheel>
                   ),
                 ),
               ),
-              ClipPath(
-                clipper: _DMWheelClipper(edge: _getEdgeForClipper()),
-                child: Container(
+            ClipPath(
+              clipper: _DMWheelClipper(edge: _edgeForClipper()),
+              child: Container(
+                width: _wheelRadius * 2,
+                height: _wheelRadius * 2,
+                decoration: BoxDecoration(
+                  color: MonacoDesign.charcoalSurface,
+                  border: Border.all(
+                    color: MonacoDesign.borderSubtle,
+                    width: 1,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: MonacoDesign.inkBlack.withOpacity(0.25),
+                      blurRadius: 20,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: _buildWheelContent(),
+              ),
+            if (!widget.isOpen)
+              Transform.translate(
+                offset: Offset(
+                  isLeft ? -_wheelRadius * (1.0 - open) : 0,
+                  !isLeft ? -_wheelRadius * (1.0 - open) : 0,
+                ),
+                child: SizedBox(
                   width: _wheelRadius * 2,
                   height: _wheelRadius * 2,
-                  decoration: BoxDecoration(
-                    color: MonacoDesign.charcoalSurface,
-                    border: Border.all(
-                      color: MonacoDesign.borderSubtle,
-                      width: 1,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: MonacoDesign.inkBlack.withOpacity(0.25),
-                        blurRadius: 20,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
                   child: _buildWheelContent(),
                 ),
-              if (!widget.isOpen)
-                Transform.translate(
-                  offset: Offset(
-                    isLeft ? -_wheelRadius * (1.0 - open) : 0,
-                    !isLeft ? -_wheelRadius * (1.0 - open) : 0,
-                  ),
-                  child: SizedBox(
-                    width: _wheelRadius * 2,
-                    height: _wheelRadius * 2,
-                    child: _buildWheelContent(),
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
+          ),
         );
       },
     );
@@ -198,12 +184,15 @@ class _DMQuickAccessWheelState extends State<DMQuickAccessWheel>
     final dms = widget.dms;
     if (dms.isEmpty) return const SizedBox.shrink();
 
+    final center = Offset(_wheelRadius, _wheelRadius);
     final children = <Widget>[];
 
     for (int i = 0; i < dms.length; i++) {
       final dm = dms[i];
+      final pos = _avatarPosition(i, dms.length);
+      final otherParticipant = dm.otherParticipant;
       final username =
-          dm.otherParticipant?['username'] as String? ?? dm.displayName;
+          otherParticipant?['username'] as String? ?? dm.displayName;
 
       children.add(
         Container(
@@ -240,7 +229,6 @@ class _DMQuickAccessWheelState extends State<DMQuickAccessWheel>
   }
 }
 
-/// Clipper for the semicircular DM wheel.
 class _DMWheelClipper extends CustomClipper<Path> {
   final DMWheelEdge edge;
 
