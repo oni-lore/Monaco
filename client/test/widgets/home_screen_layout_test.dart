@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
+import 'package:monaco/providers/auth_provider.dart';
 import 'package:monaco/providers/demo_mode_provider.dart';
 import 'package:monaco/screens/home_screen.dart';
 
@@ -11,6 +12,7 @@ void main() {
         MaterialApp(
           home: MultiProvider(
             providers: [
+              ChangeNotifierProvider(create: (_) => AuthProvider()),
               ChangeNotifierProvider(create: (_) => DemoModeProvider()..activateDemoMode()),
             ],
             child: const HomeScreen(),
@@ -31,6 +33,7 @@ void main() {
         MaterialApp(
           home: MultiProvider(
             providers: [
+              ChangeNotifierProvider(create: (_) => AuthProvider()),
               ChangeNotifierProvider(create: (_) => DemoModeProvider()..activateDemoMode()),
             ],
             child: const HomeScreen(),
@@ -54,6 +57,7 @@ void main() {
         MaterialApp(
           home: MultiProvider(
             providers: [
+              ChangeNotifierProvider(create: (_) => AuthProvider()),
               ChangeNotifierProvider(create: (_) => DemoModeProvider()..activateDemoMode()),
             ],
             child: const HomeScreen(),
@@ -73,6 +77,7 @@ void main() {
         MaterialApp(
           home: MultiProvider(
             providers: [
+              ChangeNotifierProvider(create: (_) => AuthProvider()),
               ChangeNotifierProvider(create: (_) => DemoModeProvider()..activateDemoMode()),
             ],
             child: const HomeScreen(),
@@ -92,6 +97,7 @@ void main() {
         MaterialApp(
           home: MultiProvider(
             providers: [
+              ChangeNotifierProvider(create: (_) => AuthProvider()),
               ChangeNotifierProvider(create: (_) => DemoModeProvider()..activateDemoMode()),
             ],
             child: const HomeScreen(),
@@ -111,6 +117,7 @@ void main() {
         MaterialApp(
           home: MultiProvider(
             providers: [
+              ChangeNotifierProvider(create: (_) => AuthProvider()),
               ChangeNotifierProvider(create: (_) => DemoModeProvider()..activateDemoMode()),
             ],
             child: const HomeScreen(),
