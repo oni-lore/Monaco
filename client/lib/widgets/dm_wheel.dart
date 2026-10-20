@@ -15,14 +15,6 @@ enum DMWheelMode { off, left, right }
 /// The wheel slides in from the selected screen edge and displays private
 /// DM contacts as circular avatars arranged along a curved arc. Tapping an
 /// avatar opens that user's direct conversation directly.
-///
-/// The wheel:
-/// - Is exclusively for private DMs (no Councils or groups)
-/// - Respects device safe areas and available screen dimensions
-/// - Closes on outside tap or Back button
-/// - Restores underlying screen scroll position when closed
-/// - Is available on Chats, Loading Chambers, DM conversations, and
-///   Council conversations (not on Profile, Settings, or Notifications)
 class DMQuickAccessWheel extends StatefulWidget {
   /// Whether the wheel is enabled.
   final DMWheelMode mode;
@@ -293,8 +285,11 @@ class _DMQuickAccessWheelState extends State<DMQuickAccessWheel>
                   ),
                 ),
               ),
-            );
-          }
+            ),
+          ),
+        ),
+      );
+    }
 
     return Stack(
       children: children,

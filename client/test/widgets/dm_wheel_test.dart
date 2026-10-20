@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:monaco/models/conversation.dart';
+import 'package:monaco/models/message.dart';
 import 'package:monaco/widgets/dm_wheel.dart';
 
 void main() {
