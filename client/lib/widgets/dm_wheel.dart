@@ -79,9 +79,10 @@ class _DMQuickAccessWheelState extends State<DMQuickAccessWheel>
   Offset _avatarPosition(int index, int total) {
     if (total == 0) return Offset.zero;
     final startAngle = widget.mode == DMWheelMode.left ? -pi / 2 : pi / 2;
-    final endAngle = widget.mode == DMWheelMode.left ? pi / 2 : 3 * pi / 2;
-    final angle =
-        startAngle + (endAngle - startAngle) * index / (total - 1 > 0 ? total - 1 : 1);
+    final endAngle =
+        widget.mode == DMWheelMode.left ? pi / 2 : 3 * pi / 2;
+    final angle = startAngle +
+        (endAngle - startAngle) * index / (total - 1 > 0 ? total - 1 : 1);
     final radius = _innerRadius + (_wheelRadius - _innerRadius) * 0.5;
     return Offset(radius * cos(angle), radius * sin(angle));
   }
@@ -100,54 +101,59 @@ class _DMQuickAccessWheelState extends State<DMQuickAccessWheel>
     final isLeft = widget.mode == DMWheelMode.left;
     final open = _openAnimation.value;
 
-    return Stack(
-      children: [
-        if (open > 0.1)
-          Positioned.fill(
-            child: IgnorePointer(
-              ignoring: open < 0.5,
-              child: Opacity(
-                opacity: open * 0.3,
-                child: Container(color: Colors.black.withOpacity(0.2)),
-              ),
-            ),
-          ),
-        ClipPath(
-          clipper: _DMWheelClipper(edge: _edgeForClipper()),
-          child: Container(
-            width: _wheelRadius * 2,
-            height: _wheelRadius * 2,
-            decoration: BoxDecoration(
-              color: MonacoDesign.charcoalSurface,
-              border: Border.all(
-                color: MonacoDesign.borderSubtle,
-                width: 1,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: MonacoDesign.inkBlack.withOpacity(0.25),
-                  blurRadius: 20,
-                  offset: const Offset(0, 4),
+    return AnimatedBuilder(
+      animation: _openController,
+      builder: (context, child) {
+        return Stack(
+          children: [
+            if (open > 0.1)
+              Positioned.fill(
+                child: IgnorePointer(
+                  ignoring: open < 0.5,
+                  child: Opacity(
+                    opacity: open * 0.3,
+                    child: Container(color: Colors.black.withOpacity(0.2)),
+                  ),
                 ),
-              ],
-            ),
-            child: _buildWheelContent(),
+              ),
+            ClipPath(
+              clipper: _DMWheelClipper(edge: _edgeForClipper()),
+              child: Container(
+                width: _wheelRadius * 2,
+                height: _wheelRadius * 2,
+                decoration: BoxDecoration(
+                  color: MonacoDesign.charcoalSurface,
+                  border: Border.all(
+                    color: MonacoDesign.borderSubtle,
+                    width: 1,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: MonacoDesign.inkBlack.withOpacity(0.25),
+                      blurRadius: 20,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: _buildWheelContent(),
+              ),
+            if (!widget.isOpen)
+              AnimatedPositioned(
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeOutCubic,
+                top: safeArea.top + 60.0,
+                left: isLeft ? -_wheelRadius * (1.0 - open) : null,
+                right: !isLeft ? -_wheelRadius * (1.0 - open) : null,
+                child: SizedBox(
+                  width: _wheelRadius * 2,
+                  height: _wheelRadius * 2,
+                  child: _buildWheelContent(),
+                ),
+              ),
+            ],
           ),
-        ),
-        if (!widget.isOpen)
-          Transform.translate(
-            offset: Offset(
-              isLeft ? -_wheelRadius * (1.0 - open) : 0,
-              !isLeft ? -_wheelRadius * (1.0 - open) : 0,
-            ),
-            child: SizedBox(
-              width: _wheelRadius * 2,
-              height: _wheelRadius * 2,
-              child: _buildWheelContent(),
-            ),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -238,5 +244,3 @@ class _DMWheelClipper extends CustomClipper<Path> {
   @override
   bool shouldReclip(_DMWheelClipper oldClipper) => oldClipper.edge != edge;
 }
-// CI retry
-// rebuild
