@@ -76,7 +76,7 @@ class AuthApiService {
       Uri.parse('$baseUrl/logout'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({'refresh_token': refreshToken}),
-    ).timeout(_requestTimeout);
+    ).timeout(const Duration(seconds: 8));
   }
 
   Future<void> changePassword({
@@ -94,7 +94,7 @@ class AuthApiService {
         'current_password': currentPassword,
         'new_password': newPassword,
       }),
-    ).timeout(_requestTimeout);
+    ).timeout(const Duration(seconds: 8));
 
     if (response.statusCode != 200) {
       final error = jsonDecode(response.body)['error'] as String? ?? 'Failed to change password';
@@ -113,7 +113,7 @@ class AuthApiService {
         'Authorization': 'Bearer $accessToken',
       },
       body: jsonEncode({'email': newEmail}),
-    ).timeout(_requestTimeout);
+    ).timeout(const Duration(seconds: 8));
 
     if (response.statusCode != 200) {
       final error = jsonDecode(response.body)['error'] as String? ?? 'Failed to change email';
@@ -126,7 +126,7 @@ class AuthApiService {
       Uri.parse('$baseUrl/auth/forgot-password'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({'email': email}),
-    ).timeout(_requestTimeout);
+    ).timeout(const Duration(seconds: 8));
 
     if (response.statusCode != 200) {
       final error = jsonDecode(response.body)['error'] as String? ?? 'Failed to request password reset';
@@ -142,7 +142,7 @@ class AuthApiService {
       Uri.parse('$baseUrl/auth/reset-password'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({'token': token, 'new_password': newPassword}),
-    ).timeout(_requestTimeout);
+    ).timeout(const Duration(seconds: 8));
 
     if (response.statusCode != 200) {
       final error = jsonDecode(response.body)['error'] as String? ?? 'Failed to reset password';
@@ -158,7 +158,7 @@ class AuthApiService {
         'Authorization': 'Bearer $accessToken',
       },
       body: jsonEncode({'password': password}),
-    ).timeout(_requestTimeout);
+    ).timeout(const Duration(seconds: 8));
 
     if (response.statusCode != 200) {
       final error = jsonDecode(response.body)['error'] as String? ?? 'Failed to delete account';
@@ -170,7 +170,7 @@ class AuthApiService {
     final response = await _client.get(
       Uri.parse('$baseUrl/auth/sessions'),
       headers: {'Authorization': 'Bearer $accessToken'},
-    ).timeout(_requestTimeout);
+    ).timeout(const Duration(seconds: 8));
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body) as Map<String, dynamic>;
@@ -184,7 +184,7 @@ class AuthApiService {
     final response = await _client.delete(
       Uri.parse('$baseUrl/auth/sessions/$sessionId'),
       headers: {'Authorization': 'Bearer $accessToken'},
-    ).timeout(_requestTimeout);
+    ).timeout(const Duration(seconds: 8));
 
     if (response.statusCode != 200) {
       throw Exception('Failed to revoke session');
@@ -195,7 +195,7 @@ class AuthApiService {
     final response = await _client.delete(
       Uri.parse('$baseUrl/auth/sessions'),
       headers: {'Authorization': 'Bearer $accessToken'},
-    ).timeout(_requestTimeout);
+    ).timeout(const Duration(seconds: 8));
 
     if (response.statusCode != 200) {
       throw Exception('Failed to revoke other sessions');
@@ -209,7 +209,7 @@ class AuthApiService {
       Uri.parse('$baseUrl/auth/refresh'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({'refresh_token': refreshToken}),
-    ).timeout(_requestTimeout);
+    ).timeout(const Duration(seconds: 8));
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body) as Map<String, dynamic>;
