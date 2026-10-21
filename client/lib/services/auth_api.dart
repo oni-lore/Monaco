@@ -7,7 +7,6 @@ import '../utils/constants.dart';
 
 class AuthApiService {
   static const String baseUrl = ApiConstants.baseUrl;
-  static const Duration _requestTimeout = Duration(seconds: 8);
   final http.Client _client = http.Client();
 
   Future<AuthResponse> _postWithRetry(
@@ -23,7 +22,7 @@ class AuthApiService {
           Uri.parse('$baseUrl$endpoint'),
           headers: {'Content-Type': 'application/json'},
           body: jsonEncode(body),
-        ).timeout(_requestTimeout);
+        ).timeout(const Duration(seconds: 8));
         if (response.statusCode == 200) {
           final data = jsonDecode(response.body) as Map<String, dynamic>;
           return AuthResponse.fromJson(data);

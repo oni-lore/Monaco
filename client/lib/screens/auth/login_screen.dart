@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:monaco/providers/auth_provider.dart';
 import 'package:monaco/screens/auth/forgot_password_screen.dart';
 import 'package:monaco/utils/design_system.dart';
-import 'package:monaco/widgets/custom_button.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
