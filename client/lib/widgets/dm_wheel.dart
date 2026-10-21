@@ -5,6 +5,7 @@ import 'package:monaco/models/message.dart';
 import 'package:monaco/utils/design_system.dart';
 
 enum DMWheelMode { off, left, right }
+enum DMWheelEdge { left, right }
 
 class DMQuickAccessWheel extends StatefulWidget {
   final DMWheelMode mode;
@@ -137,6 +138,7 @@ class _DMQuickAccessWheelState extends State<DMQuickAccessWheel>
                 ),
                 child: _buildWheelContent(),
               ),
+              ),
             if (!widget.isOpen)
               AnimatedPositioned(
                 duration: const Duration(milliseconds: 300),
@@ -150,8 +152,7 @@ class _DMQuickAccessWheelState extends State<DMQuickAccessWheel>
                   child: _buildWheelContent(),
                 ),
               ),
-            ],
-          ),
+          ],
         );
       },
     );
