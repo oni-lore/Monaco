@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:monaco/providers/auth_provider.dart';
 import 'package:monaco/providers/demo_mode_provider.dart';
+import 'package:monaco/providers/dm_wheel_mode_provider.dart';
 import 'package:monaco/screens/home_screen.dart';
 
 void main() {
@@ -14,6 +15,7 @@ void main() {
             providers: [
               ChangeNotifierProvider(create: (_) => AuthProvider()),
               ChangeNotifierProvider(create: (_) => DemoModeProvider()..activateDemoMode()),
+              ChangeNotifierProvider(create: (_) => DMWheelModeProvider()),
             ],
             child: const HomeScreen(),
           ),
@@ -35,6 +37,7 @@ void main() {
             providers: [
               ChangeNotifierProvider(create: (_) => AuthProvider()),
               ChangeNotifierProvider(create: (_) => DemoModeProvider()..activateDemoMode()),
+              ChangeNotifierProvider(create: (_) => DMWheelModeProvider()),
             ],
             child: const HomeScreen(),
           ),
@@ -59,6 +62,7 @@ void main() {
             providers: [
               ChangeNotifierProvider(create: (_) => AuthProvider()),
               ChangeNotifierProvider(create: (_) => DemoModeProvider()..activateDemoMode()),
+              ChangeNotifierProvider(create: (_) => DMWheelModeProvider()),
             ],
             child: const HomeScreen(),
           ),
@@ -79,6 +83,7 @@ void main() {
             providers: [
               ChangeNotifierProvider(create: (_) => AuthProvider()),
               ChangeNotifierProvider(create: (_) => DemoModeProvider()..activateDemoMode()),
+              ChangeNotifierProvider(create: (_) => DMWheelModeProvider()),
             ],
             child: const HomeScreen(),
           ),
@@ -99,6 +104,7 @@ void main() {
             providers: [
               ChangeNotifierProvider(create: (_) => AuthProvider()),
               ChangeNotifierProvider(create: (_) => DemoModeProvider()..activateDemoMode()),
+              ChangeNotifierProvider(create: (_) => DMWheelModeProvider()),
             ],
             child: const HomeScreen(),
           ),
@@ -119,6 +125,7 @@ void main() {
             providers: [
               ChangeNotifierProvider(create: (_) => AuthProvider()),
               ChangeNotifierProvider(create: (_) => DemoModeProvider()..activateDemoMode()),
+              ChangeNotifierProvider(create: (_) => DMWheelModeProvider()),
             ],
             child: const HomeScreen(),
           ),
