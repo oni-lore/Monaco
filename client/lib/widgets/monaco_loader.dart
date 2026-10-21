@@ -28,7 +28,7 @@ class MonacoLoader extends StatefulWidget {
 }
 
 class _MonacoLoaderState extends State<MonacoLoader>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
   late AnimationController _rotateController;

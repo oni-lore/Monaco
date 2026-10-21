@@ -10,12 +10,14 @@ class AuthProvider extends ChangeNotifier {
   User? _user;
   AuthTokens? _tokens;
   bool _isLoading = false;
+  bool _isLoggingIn = false;
   String? _error;
   bool _isInitialized = false;
 
   User? get user => _user;
   AuthTokens? get tokens => _tokens;
   bool get isLoading => _isLoading;
+  bool get isLoggingIn => _isLoggingIn;
   String? get error => _error;
   bool get isAuthenticated => _user != null && _tokens != null;
   bool get isInitialized => _isInitialized;
@@ -90,6 +92,8 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<void> login({required String username, required String password}) async {
+    if (_isLoggingIn) return;
+    _isLoggingIn = true;
     _setLoading(true);
     try {
       final response = await AuthApiService().login(username: username, password: password);
@@ -100,6 +104,7 @@ class AuthProvider extends ChangeNotifier {
       rethrow;
     } finally {
       _setLoading(false);
+      _isLoggingIn = false;
     }
   }
 

@@ -1,12 +1,50 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'package:http/http.dart' as http;
 import '../models/user.dart';
 import '../utils/constants.dart';
 
 class AuthApiService {
   static const String baseUrl = ApiConstants.baseUrl;
-  static const Duration _requestTimeout = Duration(seconds: 10);
+  static const Duration _requestTimeout = Duration(seconds: 8);
   final http.Client _client = http.Client();
+
+  Future<AuthResponse> _postWithRetry(
+    String endpoint,
+    Map<String, dynamic> body, {
+    int maxRetries = 1,
+  }) async {
+    int attempts = 0;
+    while (true) {
+      attempts++;
+      try {
+        final response = await _client.post(
+          Uri.parse('$baseUrl$endpoint'),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode(body),
+        ).timeout(_requestTimeout);
+        if (response.statusCode == 200) {
+          final data = jsonDecode(response.body) as Map<String, dynamic>;
+          return AuthResponse.fromJson(data);
+        } else {
+          final error = jsonDecode(response.body)['error'] as String? ?? 'Request failed';
+          throw Exception(error);
+        }
+      } on SocketException {
+        if (attempts > maxRetries) {
+          throw Exception('Unable to connect to the server. Please check your connection and try again.');
+        }
+        await Future.delayed(const Duration(seconds: 1));
+      } on TimeoutException {
+        if (attempts > maxRetries) {
+          throw Exception('The login request timed out. Please try again.');
+        }
+        await Future.delayed(const Duration(seconds: 1));
+      }
+    }
+    throw Exception('Request failed after multiple attempts');
+  }
 
   Future<AuthResponse> register({
     required String username,
@@ -15,44 +53,23 @@ class AuthApiService {
     String? phone,
     DateTime? birthday,
   }) async {
-    final response = await _client.post(
-      Uri.parse('$baseUrl/register'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'username': username,
-        'password': password,
-        'email': email,
-        if (phone != null) 'phone': phone,
-        if (birthday != null) 'birthday': birthday.toIso8601String().split('T')[0],
-      }),
-    ).timeout(_requestTimeout);
-
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body) as Map<String, dynamic>;
-      return AuthResponse.fromJson(data);
-    } else {
-      final error = jsonDecode(response.body)['error'] as String? ?? 'Registration failed';
-      throw Exception(error);
-    }
+    return _postWithRetry('/register', {
+      'username': username,
+      'password': password,
+      'email': email,
+      if (phone != null) 'phone': phone,
+      if (birthday != null) 'birthday': birthday.toIso8601String().split('T')[0],
+    }, maxRetries: 1);
   }
 
   Future<AuthResponse> login({
     required String username,
     required String password,
   }) async {
-    final response = await _client.post(
-      Uri.parse('$baseUrl/login'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'username': username, 'password': password}),
-    ).timeout(_requestTimeout);
-
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body) as Map<String, dynamic>;
-      return AuthResponse.fromJson(data);
-    } else {
-      final error = jsonDecode(response.body)['error'] as String? ?? 'Login failed';
-      throw Exception(error);
-    }
+    return _postWithRetry('/login', {
+      'username': username,
+      'password': password,
+    }, maxRetries: 1);
   }
 
   Future<void> logout({required String refreshToken}) async {

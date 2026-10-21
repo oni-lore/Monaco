@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:monaco/providers/auth_provider.dart';
-import 'package:monaco/providers/demo_mode_provider.dart';
 import 'package:monaco/screens/auth/forgot_password_screen.dart';
 import 'package:monaco/utils/design_system.dart';
 import 'package:monaco/widgets/custom_button.dart';
@@ -118,10 +117,23 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: 24),
                   Consumer<AuthProvider>(
                     builder: (BuildContext context, AuthProvider auth, Widget? _) {
-                      return CustomButton(
-                        text: 'Login',
-                        isLoading: auth.isLoading,
-                        onPressed: _handleLogin,
+                      return OutlinedButton(
+                        onPressed: auth.isLoggingIn ? null : _handleLogin,
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: MonacoDesign.inkBlack,
+                          side: BorderSide(color: MonacoDesign.borderSubtle, width: 1),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          minimumSize: const Size(double.infinity, 52),
+                        ),
+                        child: const Text(
+                          'Login',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                       );
                     },
                   ),
@@ -136,29 +148,6 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
-                  Consumer<AuthProvider>(
-                    builder: (BuildContext context, AuthProvider auth, Widget? _) {
-                      return OutlinedButton(
-                        onPressed: auth.isLoading ? null : _handleTryDemo,
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: MonacoDesign.inkBlack,
-                          side: BorderSide(color: MonacoDesign.borderSubtle, width: 1),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          minimumSize: const Size(double.infinity, 52),
-                        ),
-                        child: const Text(
-                          'Try Demo',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      );
-                    },
-                  ),
                 ],
               ),
             ),
@@ -166,22 +155,6 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
       ),
     );
-  }
-
-  Future<void> _handleTryDemo() async {
-    final demoMode = context.read<DemoModeProvider>();
-    try {
-      await demoMode.activateDemoMode();
-      if (mounted) {
-        Navigator.pushReplacementNamed(context, '/home');
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to start demo: $e')),
-        );
-      }
-    }
   }
 
   Future<void> _handleLogin() async {

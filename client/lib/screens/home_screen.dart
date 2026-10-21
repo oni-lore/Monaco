@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:monaco/providers/auth_provider.dart';
-import 'package:monaco/providers/demo_mode_provider.dart';
 import 'package:monaco/providers/dm_wheel_mode_provider.dart';
 import 'package:monaco/services/chat_api.dart';
 import 'package:monaco/models/message.dart';
@@ -64,16 +63,6 @@ class _HomeScreenState extends State<HomeScreen>
 
   Future<void> _loadConversations() async {
     final auth = context.read<AuthProvider>();
-    final demoMode = context.read<DemoModeProvider>();
-
-    if (demoMode.isDemoMode) {
-      setState(() {
-        _conversations = demoMode.demoConversations;
-        _isLoading = false;
-        _error = null;
-      });
-      return;
-    }
 
     final token = auth.tokens?.accessToken;
     if (token == null) {
@@ -114,21 +103,6 @@ class _HomeScreenState extends State<HomeScreen>
       });
     }
 
-    final demoMode = context.read<DemoModeProvider>();
-    if (demoMode.isDemoMode) {
-      if (mounted) {
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) => ConversationScreen(
-              conversationId: conversation.id,
-              conversationTitle: conversation.displayName,
-            ),
-          ),
-        );
-      }
-      return;
-    }
-
     final auth = context.read<AuthProvider>();
     final token = auth.tokens?.accessToken;
     if (token == null) return;
@@ -159,15 +133,6 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   Future<void> _logout() async {
-    final demoMode = context.read<DemoModeProvider>();
-    if (demoMode.isDemoMode) {
-      await demoMode.deactivateDemoMode();
-      if (mounted) {
-        Navigator.of(context).pushNamedAndRemoveUntil('/login', (_) => false);
-      }
-      return;
-    }
-
     await context.read<AuthProvider>().logout();
     if (mounted) {
       Navigator.of(context).pushNamedAndRemoveUntil('/login', (_) => false);

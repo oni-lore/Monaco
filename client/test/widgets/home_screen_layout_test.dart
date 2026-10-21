@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:monaco/providers/auth_provider.dart';
-import 'package:monaco/providers/demo_mode_provider.dart';
 import 'package:monaco/providers/dm_wheel_mode_provider.dart';
 import 'package:monaco/screens/home_screen.dart';
 
@@ -14,7 +13,6 @@ void main() {
           home: MultiProvider(
             providers: [
               ChangeNotifierProvider(create: (_) => AuthProvider()),
-              ChangeNotifierProvider(create: (_) => DemoModeProvider()..activateDemoMode()),
               ChangeNotifierProvider(create: (_) => DMWheelModeProvider()),
             ],
             child: const HomeScreen(),
@@ -26,17 +24,14 @@ void main() {
 
       expect(find.text('Monaco'), findsOneWidget);
       expect(find.text('Search'), findsOneWidget);
-      expect(find.text('Notes'), findsOneWidget);
-      expect(find.text('Councils'), findsOneWidget);
     });
 
-    testWidgets('shows Councils before DMs', (WidgetTester tester) async {
+    testWidgets('renders error when not authenticated', (WidgetTester tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: MultiProvider(
             providers: [
               ChangeNotifierProvider(create: (_) => AuthProvider()),
-              ChangeNotifierProvider(create: (_) => DemoModeProvider()..activateDemoMode()),
               ChangeNotifierProvider(create: (_) => DMWheelModeProvider()),
             ],
             child: const HomeScreen(),
@@ -46,34 +41,7 @@ void main() {
 
       await tester.pumpAndSettle();
 
-      expect(find.text('Councils'), findsOneWidget);
-      expect(find.text('Recent DM'), findsOneWidget);
-
-      final councilsIndex = tester.getTopLeft(find.text('Councils').first).dy;
-      final dmIndex = tester.getTopLeft(find.text('Recent DM').first).dy;
-
-      expect(councilsIndex, lessThan(dmIndex));
-    });
-
-    testWidgets('Council cards show names and previews', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: MultiProvider(
-            providers: [
-              ChangeNotifierProvider(create: (_) => AuthProvider()),
-              ChangeNotifierProvider(create: (_) => DemoModeProvider()..activateDemoMode()),
-              ChangeNotifierProvider(create: (_) => DMWheelModeProvider()),
-            ],
-            child: const HomeScreen(),
-          ),
-        ),
-      );
-
-      await tester.pumpAndSettle();
-
-      expect(find.text('The Design Council'), findsOneWidget);
-      expect(find.text('Weekend people'), findsOneWidget);
-      expect(find.text('Study Circle'), findsOneWidget);
+      expect(find.text('Couldn\u2019t load Chats'), findsOneWidget);
     });
 
     testWidgets('bottom navigation has three destinations', (WidgetTester tester) async {
@@ -82,7 +50,6 @@ void main() {
           home: MultiProvider(
             providers: [
               ChangeNotifierProvider(create: (_) => AuthProvider()),
-              ChangeNotifierProvider(create: (_) => DemoModeProvider()..activateDemoMode()),
               ChangeNotifierProvider(create: (_) => DMWheelModeProvider()),
             ],
             child: const HomeScreen(),
@@ -97,34 +64,12 @@ void main() {
       expect(find.text('Profile'), findsOneWidget);
     });
 
-    testWidgets('DM previews section shows individual DMs', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: MultiProvider(
-            providers: [
-              ChangeNotifierProvider(create: (_) => AuthProvider()),
-              ChangeNotifierProvider(create: (_) => DemoModeProvider()..activateDemoMode()),
-              ChangeNotifierProvider(create: (_) => DMWheelModeProvider()),
-            ],
-            child: const HomeScreen(),
-          ),
-        ),
-      );
-
-      await tester.pumpAndSettle();
-
-      expect(find.text('maya_chen'), findsWidgets);
-      expect(find.text('theo_reyes'), findsWidgets);
-      expect(find.text('leo_tan'), findsWidgets);
-    });
-
     testWidgets('no duplicate Profile button in header', (WidgetTester tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: MultiProvider(
             providers: [
               ChangeNotifierProvider(create: (_) => AuthProvider()),
-              ChangeNotifierProvider(create: (_) => DemoModeProvider()..activateDemoMode()),
               ChangeNotifierProvider(create: (_) => DMWheelModeProvider()),
             ],
             child: const HomeScreen(),
