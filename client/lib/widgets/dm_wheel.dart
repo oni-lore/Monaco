@@ -90,9 +90,7 @@ class _DMQuickAccessWheelState extends State<DMQuickAccessWheel>
   }
 
   DMWheelEdge _edgeForClipper() {
-    return widget.mode == DMWheelMode.left
-        ? DMWheelEdge.left
-        : DMWheelEdge.right;
+    return widget.mode == DMWheelMode.left ? DMWheelEdge.left : DMWheelEdge.right;
   }
 
   @override
@@ -254,6 +252,5 @@ class _DMWheelClipper extends CustomClipper<Path> {
   }
 
   @override
-  bool shouldReclip(_DMWheelClipper oldClipper) =>
-      oldClipper.edge != edge;
+  bool shouldReclip(_DMWheelClipper oldClipper) => oldClipper.edge != edge;
 }

@@ -73,6 +73,102 @@ class MonacoApp extends StatelessWidget {
   );
 }
 
+ThemeData _monoThemeData({required Brightness brightness}) {
+  final ColorScheme colorScheme = ColorScheme.fromSeed(
+    seedColor: MonacoDesign.inkBlack,
+    brightness: brightness,
+  );
+  return ThemeData(
+    useMaterial3: true,
+    colorScheme: colorScheme,
+    scaffoldBackgroundColor: MonacoDesign.charcoalDeep,
+    scaffoldBodyColor: MonacoDesign.charcoalDeep,
+    appBarTheme: const AppBarTheme(
+      backgroundColor: MonacoDesign.charcoalDeep,
+      elevation: 0,
+      iconTheme: IconThemeData(color: MonacoDesign.accentBright),
+      titleTextStyle: TextStyle(
+        color: MonacoDesign.accentBright,
+        fontWeight: FontWeight.w700,
+        fontSize: 20,
+      ),
+    ),
+    bottomAppBarTheme: const BottomAppBarTheme(
+      color: MonacoDesign.charcoalSurface,
+      elevation: 1,
+    ),
+    cardTheme: CardTheme(
+      color: MonacoDesign.charcoalCard,
+      borderRadius: BorderRadius.circular(MonacoDesign.radiusLg),
+      elevation: 0,
+    ),
+    bottomNavigationBarTheme: BottomNavigationBarThemeData(
+      backgroundColor: MonacoDesign.charcoalSurface,
+      selectedItemColor: MonacoDesign.accentBright,
+      unselectedItemColor: MonacoDesign.textMuted,
+      showSelectedLabels: true,
+      showUnselectedLabels: true,
+      type: BottomNavigationBarType.fixed,
+    ),
+    textTheme: const TextTheme(
+      bodyMedium: TextStyle(color: MonacoDesign.textBody),
+      bodySmall: TextStyle(color: MonacoDesign.textSecondary),
+      labelMedium: TextStyle(color: MonacoDesign.textMuted),
+      titleLarge: TextStyle(
+        color: MonacoDesign.textInk,
+        fontWeight: FontWeight.w700,
+      ),
+    ),
+    inputDecorationTheme: InputDecorationTheme(
+      filled: true,
+      fillColor: MonacoDesign.charcoalSurface,
+      hintStyle: TextStyle(
+        color: MonacoDesign.textMuted.withOpacity(0.7),
+        fontSize: 14,
+      ),
+      labelStyle: TextStyle(
+        color: MonacoDesign.textSecondary,
+        fontSize: 14,
+        fontWeight: FontWeight.w500,
+      ),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(MonacoDesign.radiusMd),
+        borderSide: BorderSide(color: MonacoDesign.borderMuted, width: 1),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(MonacoDesign.radiusMd),
+        borderSide: BorderSide(color: MonacoDesign.borderMuted, width: 1),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(MonacoDesign.radiusMd),
+        borderSide: BorderSide(color: MonacoDesign.inkBlack, width: 1.5),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(MonacoDesign.radiusMd),
+        borderSide: BorderSide(color: MonacoDesign.error, width: 1.5),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(MonacoDesign.radiusMd),
+        borderSide: BorderSide(color: MonacoDesign.error, width: 2),
+      ),
+    ),
+    iconTheme: const IconThemeData(color: MonacoDesign.accentBright),
+    textButtonTheme: TextButtonThemeData(
+      style: TextButton.styleFrom(
+        foregroundColor: MonacoDesign.inkBlack,
+        backgroundColor: Colors.transparent,
+      ),
+    ),
+    filledButtonTheme: FilledButtonThemeData(
+      style: FilledButton.styleFrom(
+        backgroundColor: MonacoDesign.inkBlack,
+        foregroundColor: MonacoDesign.accentBright,
+        elevation: 0,
+      ),
+    ),
+  );
+}
+
 class AuthGate extends StatelessWidget {
   const AuthGate({super.key});
 
