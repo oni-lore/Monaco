@@ -79,7 +79,8 @@ class _DMQuickAccessWheelState extends State<DMQuickAccessWheel>
 
   Offset _avatarPosition(int index, int total) {
     if (total == 0) return Offset.zero;
-    final startAngle = widget.mode == DMWheelMode.left ? -pi / 2 : pi / 2;
+    final startAngle =
+        widget.mode == DMWheelMode.left ? -pi / 2 : pi / 2;
     final endAngle =
         widget.mode == DMWheelMode.left ? pi / 2 : 3 * pi / 2;
     final angle = startAngle +
@@ -89,7 +90,9 @@ class _DMQuickAccessWheelState extends State<DMQuickAccessWheel>
   }
 
   DMWheelEdge _edgeForClipper() {
-    return widget.mode == DMWheelMode.left ? DMWheelEdge.left : DMWheelEdge.right;
+    return widget.mode == DMWheelMode.left
+        ? DMWheelEdge.left
+        : DMWheelEdge.right;
   }
 
   @override
@@ -146,29 +149,10 @@ class _DMQuickAccessWheelState extends State<DMQuickAccessWheel>
                 top: safeArea.top + 60.0,
                 left: isLeft ? -_wheelRadius * (1.0 - open) : null,
                 right: !isLeft ? -_wheelRadius * (1.0 - open) : null,
-                child: GestureDetector(
-                  onTap: _toggle,
-                  child: SizedBox(
-                    width: _handleSize,
-                    height: _handleSize,
-                    child: Container(
-                      width: _handleSize,
-                      height: _handleSize,
-                      decoration: BoxDecoration(
-                        color: MonacoDesign.charcoalElevated,
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: MonacoDesign.borderSubtle,
-                          width: 1,
-                        ),
-                      ),
-                      child: Icon(
-                        isLeft ? Icons.chevron_right_rounded : Icons.chevron_left_rounded,
-                        size: 20,
-                        color: MonacoDesign.accentBright,
-                      ),
-                    ),
-                  ),
+                child: SizedBox(
+                  width: _wheelRadius * 2,
+                  height: _wheelRadius * 2,
+                  child: _buildWheelContent(),
                 ),
               ),
           ],
@@ -192,29 +176,34 @@ class _DMQuickAccessWheelState extends State<DMQuickAccessWheel>
           otherParticipant?['username'] as String? ?? dm.displayName;
 
       children.add(
-        GestureDetector(
-          onTap: () => _selectContact(dm),
-          child: Container(
-            width: _avatarSize,
-            height: _avatarSize,
-            decoration: BoxDecoration(
-              color: MonacoDesign.charcoalElevated,
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: MonacoDesign.borderSubtle,
-                width: 1.5,
+        Positioned(
+          left: pos.dx - _avatarSize / 2,
+          top: pos.dy - _avatarSize / 2,
+          child: GestureDetector(
+            onTap: () => _selectContact(dm),
+            child: Container(
+              key: ValueKey(dm.id),
+              width: _avatarSize,
+              height: _avatarSize,
+              decoration: BoxDecoration(
+                color: MonacoDesign.charcoalElevated,
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: MonacoDesign.borderSubtle,
+                  width: 1.5,
+                ),
               ),
-            ),
-            child: Center(
-              child: Text(
-                username.isNotEmpty
-                    ? username.substring(0, 1).toUpperCase()
-                    : '?',
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
-                  color: MonacoDesign.accentBright,
-                  letterSpacing: -0.5,
+              child: Center(
+                child: Text(
+                  username.isNotEmpty
+                      ? username.substring(0, 1).toUpperCase()
+                      : '?',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    color: MonacoDesign.accentBright,
+                    letterSpacing: -0.5,
+                  ),
                 ),
               ),
             ),
@@ -265,5 +254,6 @@ class _DMWheelClipper extends CustomClipper<Path> {
   }
 
   @override
-  bool shouldReclip(_DMWheelClipper oldClipper) => oldClipper.edge != edge;
+  bool shouldReclip(_DMWheelClipper oldClipper) =>
+      oldClipper.edge != edge;
 }

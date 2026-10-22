@@ -149,9 +149,7 @@ void main() {
 
       expect(opened, isTrue);
       expect(find.byIcon(Icons.send_rounded), findsNothing);
-      // Avatar containers appear once open
-      expect(find.byType(Container).where((e) => e.widget is Container),
-          isNotEmpty);
+      expect(find.byType(Container), findsAnyWidget);
     });
 
     testWidgets('tapping first avatar invokes onContactSelected',
@@ -171,7 +169,7 @@ void main() {
 
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('M'));
+      await tester.tap(find.byKey(ValueKey('dm-1')));
       await tester.pump();
 
       expect(selectedId, 'dm-1');
@@ -194,7 +192,7 @@ void main() {
 
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('T'));
+      await tester.tap(find.byKey(ValueKey('dm-2')));
       await tester.pump();
 
       expect(selectedId, 'dm-2');
