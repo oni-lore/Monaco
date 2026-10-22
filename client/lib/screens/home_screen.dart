@@ -68,7 +68,7 @@ class _HomeScreenState extends State<HomeScreen>
     if (token == null) {
       setState(() {
         _isLoading = false;
-        _error = null;
+        _error = 'Your session has expired. Please sign in again.';
       });
       return;
     }
@@ -725,6 +725,7 @@ class _HomeScreenState extends State<HomeScreen>
                           ],
                         ),
                       ),
+                    ),
               // ── Loading Chambers ───────────────────────────────────────────
               const LoadingChambersScreenBody(),
               // ── Profile ────────────────────────────────────────────────────
@@ -784,9 +785,10 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   Widget _buildErrorPanel() {
-    return Center(
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: MonacoDesign.lg),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
         children: [
           Container(
             width: 64,
