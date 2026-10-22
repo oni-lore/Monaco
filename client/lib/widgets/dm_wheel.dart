@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:monaco/models/message.dart';
 import 'package:monaco/utils/design_system.dart';
@@ -64,22 +62,6 @@ class _DMQuickAccessWheelState extends State<DMQuickAccessWheel>
   void dispose() {
     _openController.dispose();
     super.dispose();
-  }
-
-  void _toggle() {
-    widget.onOpenChanged(!widget.isOpen);
-    widget.isOpen ? _openController.forward() : _openController.reverse();
-  }
-
-  Offset _avatarPosition(int index, int total) {
-    if (total == 0) return Offset.zero;
-    final startAngle = widget.mode == DMWheelMode.left ? -pi / 2 : pi / 2;
-    final endAngle =
-        widget.mode == DMWheelMode.left ? pi / 2 : 3 * pi / 2;
-    final angle = startAngle +
-        (endAngle - startAngle) * index / (total - 1 > 0 ? total - 1 : 1);
-    final radius = _innerRadius + (_wheelRadius - _innerRadius) * 0.5;
-    return Offset(radius * cos(angle), radius * sin(angle));
   }
 
   DMWheelEdge _edgeForClipper() {

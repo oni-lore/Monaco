@@ -42,7 +42,6 @@ class AuthApiService {
         await Future.delayed(const Duration(seconds: 1));
       }
     }
-    throw Exception('Request failed after multiple attempts');
   }
 
   Future<AuthResponse> register({
