@@ -12,6 +12,8 @@ import 'package:monaco/screens/conversation_screen.dart';
 import 'package:monaco/screens/search_screen.dart';
 import 'package:monaco/screens/profile_screen.dart';
 import 'package:monaco/screens/loading_chambers_screen.dart';
+import 'package:monaco/screens/auth/reset_password_screen.dart';
+import 'package:monaco/utils/design_system.dart';
 import 'package:monaco/widgets/monaco_loader.dart';
 
 void main() async {
@@ -43,7 +45,6 @@ class MonacoApp extends StatelessWidget {
         '/login': (_) => const LoginScreen(),
         '/register': (_) => const RegistrationScreen(),
         '/forgot-password': (_) => const ForgotPasswordScreen(),
-        '/reset-password': (_) => const ResetPasswordScreen(),
         '/home': (_) => const HomeScreen(),
         '/loading-chambers': (_) => const LoadingChambersScreen(),
         '/search': (_) => const SearchScreen(),
