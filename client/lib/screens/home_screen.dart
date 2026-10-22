@@ -708,14 +708,13 @@ class _HomeScreenState extends State<HomeScreen>
               // ── Chats ──────────────────────────────────────────────────────
               _isLoading
                   ? const Center(child: CircularProgressIndicator())
-                  : _error != null
-                  ? _buildErrorPanel()
                   : SafeArea(
                       child: SingleChildScrollView(
                         padding: const EdgeInsets.only(bottom: MonacoDesign.lg + 16),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            if (_error != null) _buildErrorPanel(),
                             _buildSearchBar(),
                             const SizedBox(height: MonacoDesign.xl),
                             _buildNotesSection(),
@@ -726,7 +725,6 @@ class _HomeScreenState extends State<HomeScreen>
                           ],
                         ),
                       ),
-                    ),
               // ── Loading Chambers ───────────────────────────────────────────
               const LoadingChambersScreenBody(),
               // ── Profile ────────────────────────────────────────────────────
