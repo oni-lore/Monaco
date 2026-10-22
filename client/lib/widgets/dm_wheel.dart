@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:monaco/models/message.dart';
 import 'package:monaco/utils/design_system.dart';
@@ -31,7 +33,9 @@ class _DMQuickAccessWheelState extends State<DMQuickAccessWheel>
   late Animation<double> _openAnimation;
 
   static const double _wheelRadius = 220.0;
+  static const double _handleSize = 48.0;
   static const double _avatarSize = 52.0;
+  static const double _innerRadius = 90.0;
 
   @override
   void initState() {
@@ -61,6 +65,27 @@ class _DMQuickAccessWheelState extends State<DMQuickAccessWheel>
   void dispose() {
     _openController.dispose();
     super.dispose();
+  }
+
+  void _toggle() {
+    widget.onOpenChanged(!widget.isOpen);
+    widget.isOpen ? _openController.forward() : _openController.reverse();
+  }
+
+  void _selectContact(Conversation dm) {
+    widget.onContactSelected(dm.id);
+    _toggle();
+  }
+
+  Offset _avatarPosition(int index, int total) {
+    if (total == 0) return Offset.zero;
+    final startAngle = widget.mode == DMWheelMode.left ? -pi / 2 : pi / 2;
+    final endAngle =
+        widget.mode == DMWheelMode.left ? pi / 2 : 3 * pi / 2;
+    final angle = startAngle +
+        (endAngle - startAngle) * index / (total - 1 > 0 ? total - 1 : 1);
+    final radius = _innerRadius + (_wheelRadius - _innerRadius) * 0.5;
+    return Offset(radius * cos(angle), radius * sin(angle));
   }
 
   DMWheelEdge _edgeForClipper() {
@@ -113,7 +138,7 @@ class _DMQuickAccessWheelState extends State<DMQuickAccessWheel>
                 ),
                 child: _buildWheelContent(),
               ),
-              ),
+            ),
             if (!widget.isOpen)
               AnimatedPositioned(
                 duration: const Duration(milliseconds: 300),
@@ -121,10 +146,29 @@ class _DMQuickAccessWheelState extends State<DMQuickAccessWheel>
                 top: safeArea.top + 60.0,
                 left: isLeft ? -_wheelRadius * (1.0 - open) : null,
                 right: !isLeft ? -_wheelRadius * (1.0 - open) : null,
-                child: SizedBox(
-                  width: _wheelRadius * 2,
-                  height: _wheelRadius * 2,
-                  child: _buildWheelContent(),
+                child: GestureDetector(
+                  onTap: _toggle,
+                  child: SizedBox(
+                    width: _handleSize,
+                    height: _handleSize,
+                    child: Container(
+                      width: _handleSize,
+                      height: _handleSize,
+                      decoration: BoxDecoration(
+                        color: MonacoDesign.charcoalElevated,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: MonacoDesign.borderSubtle,
+                          width: 1,
+                        ),
+                      ),
+                      child: Icon(
+                        isLeft ? Icons.chevron_right_rounded : Icons.chevron_left_rounded,
+                        size: 20,
+                        color: MonacoDesign.accentBright,
+                      ),
+                    ),
+                  ),
                 ),
               ),
           ],
@@ -137,36 +181,41 @@ class _DMQuickAccessWheelState extends State<DMQuickAccessWheel>
     final dms = widget.dms;
     if (dms.isEmpty) return const SizedBox.shrink();
 
+    final center = Offset(_wheelRadius, _wheelRadius);
     final children = <Widget>[];
 
     for (int i = 0; i < dms.length; i++) {
       final dm = dms[i];
+      final pos = _avatarPosition(i, dms.length);
       final otherParticipant = dm.otherParticipant;
       final username =
           otherParticipant?['username'] as String? ?? dm.displayName;
 
       children.add(
-        Container(
-          width: _avatarSize,
-          height: _avatarSize,
-          decoration: BoxDecoration(
-            color: MonacoDesign.charcoalElevated,
-            shape: BoxShape.circle,
-            border: Border.all(
-              color: MonacoDesign.borderSubtle,
-              width: 1.5,
+        GestureDetector(
+          onTap: () => _selectContact(dm),
+          child: Container(
+            width: _avatarSize,
+            height: _avatarSize,
+            decoration: BoxDecoration(
+              color: MonacoDesign.charcoalElevated,
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: MonacoDesign.borderSubtle,
+                width: 1.5,
+              ),
             ),
-          ),
-          child: Center(
-            child: Text(
-              username.isNotEmpty
-                  ? username.substring(0, 1).toUpperCase()
-                  : '?',
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w800,
-                color: MonacoDesign.accentBright,
-                letterSpacing: -0.5,
+            child: Center(
+              child: Text(
+                username.isNotEmpty
+                    ? username.substring(0, 1).toUpperCase()
+                    : '?',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                  color: MonacoDesign.accentBright,
+                  letterSpacing: -0.5,
+                ),
               ),
             ),
           ),

@@ -52,6 +52,7 @@ void main() {
       );
 
       expect(find.byType(DMQuickAccessWheel), findsOneWidget);
+      expect(find.byType(Container), findsNothing);
     });
 
     testWidgets('is hidden when open=false', (WidgetTester tester) async {
@@ -67,7 +68,10 @@ void main() {
         ),
       );
 
+      await tester.pumpAndSettle();
+
       expect(find.byType(DMQuickAccessWheel), findsOneWidget);
+      expect(find.byType(Container), findsNothing);
     });
 
     testWidgets('shows wheel when open', (WidgetTester tester) async {
@@ -88,14 +92,14 @@ void main() {
       expect(find.byType(DMQuickAccessWheel), findsOneWidget);
     });
 
-    testWidgets('left mode uses left edge', (WidgetTester tester) async {
+    testWidgets('left mode renders left-edge handle', (WidgetTester tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: DMQuickAccessWheel(
             mode: DMWheelMode.left,
             dms: createTestDMs(),
             onContactSelected: (id) {},
-            isOpen: true,
+            isOpen: false,
             onOpenChanged: (_) {},
           ),
         ),
@@ -103,16 +107,62 @@ void main() {
 
       await tester.pumpAndSettle();
 
-      expect(find.byType(DMQuickAccessWheel), findsOneWidget);
+      expect(find.byIcon(Icons.chevron_right_rounded), findsOneWidget);
     });
 
-    testWidgets('right mode uses right edge', (WidgetTester tester) async {
+    testWidgets('right mode renders right-edge handle', (WidgetTester tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: DMQuickAccessWheel(
             mode: DMWheelMode.right,
             dms: createTestDMs(),
             onContactSelected: (id) {},
+            isOpen: false,
+            onOpenChanged: (_) {},
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      expect(find.byIcon(Icons.chevron_left_rounded), findsOneWidget);
+    });
+
+    testWidgets('tapping handle opens the wheel', (WidgetTester tester) async {
+      bool opened = false;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: DMQuickAccessWheel(
+            mode: DMWheelMode.right,
+            dms: createTestDMs(),
+            onContactSelected: (id) {},
+            isOpen: false,
+            onOpenChanged: (isOpen) => opened = isOpen,
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byIcon(Icons.chevron_right_rounded).first);
+      await tester.pumpAndSettle();
+
+      expect(opened, isTrue);
+      expect(find.byIcon(Icons.send_rounded), findsNothing);
+      // Avatar containers appear once open
+      expect(find.byType(Container).where((e) => e.widget is Container),
+          isNotEmpty);
+    });
+
+    testWidgets('tapping first avatar invokes onContactSelected',
+        (WidgetTester tester) async {
+      String? selectedId;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: DMQuickAccessWheel(
+            mode: DMWheelMode.right,
+            dms: createTestDMs(),
+            onContactSelected: (id) => selectedId = id,
             isOpen: true,
             onOpenChanged: (_) {},
           ),
@@ -121,7 +171,33 @@ void main() {
 
       await tester.pumpAndSettle();
 
-      expect(find.byType(DMQuickAccessWheel), findsOneWidget);
+      await tester.tap(find.text('M'));
+      await tester.pump();
+
+      expect(selectedId, 'dm-1');
+    });
+
+    testWidgets('tapping second avatar invokes onContactSelected with its id',
+        (WidgetTester tester) async {
+      String? selectedId;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: DMQuickAccessWheel(
+            mode: DMWheelMode.right,
+            dms: createTestDMs(),
+            onContactSelected: (id) => selectedId = id,
+            isOpen: true,
+            onOpenChanged: (_) {},
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('T'));
+      await tester.pump();
+
+      expect(selectedId, 'dm-2');
     });
   });
 }

@@ -168,10 +168,10 @@ class _ConversationScreenState extends State<ConversationScreen>
     final alignment = isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start;
     final bubbleColor = isMe
         ? MonacoDesign.inkBlack
-        : Theme.of(context).colorScheme.surfaceContainerHighest;
+        : MonacoDesign.charcoalCard;
     final textColor = isMe
-        ? Colors.white
-        : Theme.of(context).colorScheme.onSurface;
+        ? MonacoDesign.accentBright
+        : MonacoDesign.textInk;
 
     return Align(
       alignment: alignment == CrossAxisAlignment.end ? Alignment.centerRight : Alignment.centerLeft,
@@ -250,7 +250,7 @@ class _ConversationScreenState extends State<ConversationScreen>
         elevation: 0,
         centerTitle: false,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: Colors.black87),
+          icon: const Icon(Icons.arrow_back_rounded, color: MonacoDesign.accentBright),
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
@@ -385,7 +385,7 @@ class _ConversationScreenState extends State<ConversationScreen>
                 ],
               ),
               child: IconButton(
-                icon: const Icon(Icons.send_rounded, color: Colors.white, size: 20),
+                icon: const Icon(Icons.send_rounded, color: MonacoDesign.accentBright, size: 20),
                 onPressed: _isSending ? null : _sendMessage,
                 tooltip: 'Send',
                 constraints: const BoxConstraints(),
