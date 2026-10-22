@@ -68,7 +68,7 @@ class _HomeScreenState extends State<HomeScreen>
     if (token == null) {
       setState(() {
         _isLoading = false;
-        _error = 'Your session has expired. Please sign in again.';
+        _error = null;
       });
       return;
     }
