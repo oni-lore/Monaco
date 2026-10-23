@@ -33,7 +33,6 @@ class _DMQuickAccessWheelState extends State<DMQuickAccessWheel>
   late Animation<double> _openAnimation;
 
   static const double _wheelRadius = 220.0;
-  static const double _handleSize = 48.0;
   static const double _avatarSize = 52.0;
   static const double _innerRadius = 90.0;
 
@@ -163,7 +162,6 @@ class _DMQuickAccessWheelState extends State<DMQuickAccessWheel>
     final dms = widget.dms;
     if (dms.isEmpty) return const SizedBox.shrink();
 
-    final center = Offset(_wheelRadius, _wheelRadius);
     final children = <Widget>[];
 
     for (int i = 0; i < dms.length; i++) {
