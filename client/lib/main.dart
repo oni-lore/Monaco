@@ -170,6 +170,16 @@ ThemeData _monoThemeData({required Brightness brightness}) {
   );
 }
 
+ThemeData _monoThemeData({required Brightness brightness}) {
+  return ThemeData(
+    useMaterial3: true,
+    colorScheme: ColorScheme.fromSeed(
+      seedColor: Colors.indigo,
+      brightness: brightness,
+    ),
+  );
+}
+
 class AuthGate extends StatelessWidget {
   const AuthGate({super.key});
 
