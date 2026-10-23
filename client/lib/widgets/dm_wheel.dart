@@ -34,7 +34,6 @@ class _DMQuickAccessWheelState extends State<DMQuickAccessWheel>
 
   static const double _wheelRadius = 220.0;
   static const double _avatarSize = 52.0;
-  static const double _innerRadius = 90.0;
 
   @override
   void initState() {
@@ -66,9 +65,6 @@ class _DMQuickAccessWheelState extends State<DMQuickAccessWheel>
     super.dispose();
   }
 
-  void _toggle() {
-    widget.onOpenChanged(!widget.isOpen);
-    widget.isOpen ? _openController.forward() : _openController.reverse();
   }
 
   void _selectContact(Conversation dm) {

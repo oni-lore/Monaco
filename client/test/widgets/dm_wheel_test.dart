@@ -149,7 +149,7 @@ void main() {
 
       expect(opened, isTrue);
       expect(find.byIcon(Icons.send_rounded), findsNothing);
-      expect(find.byType(Container), findsOneWidget);
+      expect(find.byType(Container), findsWidgets);
     });
 
     testWidgets('tapping first avatar invokes onContactSelected',

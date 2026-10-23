@@ -175,11 +175,27 @@ ThemeData _monoThemeData({required Brightness brightness}) {
     colorScheme: ColorScheme.fromSeed(
       seedColor: Colors.indigo,
       brightness: brightness,
+      ),
     ),
   );
 }
 
-class AuthGate extends StatelessWidget {
+ThemeData _monoThemeData({required Brightness brightness}) {
+  return ThemeData(
+    useMaterial3: true,
+    colorScheme: ColorScheme.fromSeed(
+      seedColor: Colors.indigo,
+      brightness: brightness,
+    ),
+    scaffoldBackgroundColor: Color(0xFF121212),
+    scaffoldBodyColor: Color(0xFF121212),
+    appBarTheme: const AppBarTheme(
+      backgroundColor: Color(0xFF121212),
+      elevation: 0,
+      iconTheme: IconThemeData(color: Colors.white),
+    ),
+  );
+}
   const AuthGate({super.key});
 
   @override
