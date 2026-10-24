@@ -15,64 +15,6 @@ import 'package:monaco/screens/loading_chambers_screen.dart';
 import 'package:monaco/utils/design_system.dart';
 import 'package:monaco/widgets/monaco_loader.dart';
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await SharedPreferences.getInstance();
-  runApp(const MonacoApp());
-}
-
-/// Provides persisted DM Quick-Access wheel mode (Left / Right / Off).
-/// Defined in lib/providers/dm_wheel_mode_provider.dart.
-
-class MonacoApp extends StatelessWidget {
-  const MonacoApp({super.key});
-
-  @override
-  Widget build(BuildContext context) => MultiProvider(
-    providers: [
-      ChangeNotifierProvider(create: (BuildContext _) => AuthProvider()),
-      ChangeNotifierProvider(create: (BuildContext _) => DMWheelModeProvider()),
-    ],
-    child: MaterialApp(
-      title: 'Monaco',
-      debugShowCheckedModeBanner: false,
-      theme: _monoThemeData(brightness: Brightness.light),
-      darkTheme: _monoThemeData(brightness: Brightness.dark),
-      themeMode: ThemeMode.system,
-      home: const AuthGate(),
-      routes: {
-        '/login': (_) => const LoginScreen(),
-        '/register': (_) => const RegistrationScreen(),
-        '/forgot-password': (_) => const ForgotPasswordScreen(),
-        '/home': (_) => const HomeScreen(),
-        '/loading-chambers': (_) => const LoadingChambersScreen(),
-        '/search': (_) => const SearchScreen(),
-        '/profile': (_) => const ProfileScreen(),
-      },
-      onGenerateRoute: (settings) {
-        if (settings.name == '/conversation') {
-          final args = settings.arguments as Map<String, dynamic>;
-          return MaterialPageRoute(
-            builder: (_) => ConversationScreen(
-              conversationId: args['conversationId'] as String,
-              conversationTitle: args['conversationTitle'] as String,
-            ),
-          );
-        }
-        if (settings.name == '/reset-password') {
-          final args = settings.arguments as Map<String, dynamic>;
-          return MaterialPageRoute(
-            builder: (_) => ResetPasswordScreen(
-              token: args['token'] as String,
-            ),
-          );
-        }
-        return null;
-      },
-    ),
-  );
-}
-
 ThemeData _monoThemeData({required Brightness brightness}) {
   return ThemeData(
     useMaterial3: true,
@@ -164,6 +106,55 @@ ThemeData _monoThemeData({required Brightness brightness}) {
         foregroundColor: MonacoDesign.accentBright,
         elevation: 0,
       ),
+    ),
+  );
+}
+
+class MonacoApp extends StatelessWidget {
+  const MonacoApp({super.key});
+
+  @override
+  Widget build(BuildContext context) => MultiProvider(
+    providers: [
+      ChangeNotifierProvider(create: (BuildContext _) => AuthProvider()),
+      ChangeNotifierProvider(create: (BuildContext _) => DMWheelModeProvider()),
+    ],
+    child: MaterialApp(
+      title: 'Monaco',
+      debugShowCheckedModeBanner: false,
+      theme: _monoThemeData(brightness: Brightness.light),
+      darkTheme: _monoThemeData(brightness: Brightness.dark),
+      themeMode: ThemeMode.system,
+      home: const AuthGate(),
+      routes: {
+        '/login': (_) => const LoginScreen(),
+        '/register': (_) => const RegistrationScreen(),
+        '/forgot-password': (_) => const ForgotPasswordScreen(),
+        '/home': (_) => const HomeScreen(),
+        '/loading-chambers': (_) => const LoadingChambersScreen(),
+        '/search': (_) => const SearchScreen(),
+        '/profile': (_) => const ProfileScreen(),
+      },
+      onGenerateRoute: (settings) {
+        if (settings.name == '/conversation') {
+          final args = settings.arguments as Map<String, dynamic>;
+          return MaterialPageRoute(
+            builder: (_) => ConversationScreen(
+              conversationId: args['conversationId'] as String,
+              conversationTitle: args['conversationTitle'] as String,
+            ),
+          );
+        }
+        if (settings.name == '/reset-password') {
+          final args = settings.arguments as Map<String, dynamic>;
+          return MaterialPageRoute(
+            builder: (_) => ResetPasswordScreen(
+              token: args['token'] as String,
+            ),
+          );
+        }
+        return null;
+      },
     ),
   );
 }
