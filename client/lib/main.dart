@@ -35,7 +35,6 @@ ThemeData _monoThemeData({required Brightness brightness}) {
       ),
     ),
     bottomAppBarTheme: const BottomAppBarTheme(
-      color: MonacoDesign.charcoalSurface,
       elevation: 1,
     ),
     cardTheme: CardTheme(
