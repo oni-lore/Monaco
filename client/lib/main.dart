@@ -130,32 +130,11 @@ class MonacoApp extends StatelessWidget {
         '/login': (_) => const LoginScreen(),
         '/register': (_) => const RegistrationScreen(),
         '/forgot-password': (_) => const ForgotPasswordScreen(),
-        '/home': (_) => const HomeScreen(),
-        '/loading-chambers': (_) => const LoadingChambersScreen(),
-        '/search': (_) => const SearchScreen(),
-        '/profile': (_) => const ProfileScreen(),
+      '/home': (_) => const HomeScreen(),
+      '/loading-chambers': (_) => const LoadingChambersScreen(),
+      '/screen': (_) => const SearchScreen(),
+      '/profile': (_) => const ProfileScreen(),
       },
-      onGenerateRoute: (settings) {
-        if (settings.name == '/conversation') {
-          final args = settings.arguments as Map<String, dynamic>;
-          return MaterialPageRoute(
-            builder: (_) => ConversationScreen(
-              conversationId: args['conversationId'] as String,
-              conversationTitle: args['conversationTitle'] as String,
-            ),
-          );
-        }
-        if (settings.name == '/reset-password') {
-          final args = settings.arguments as Map<String, dynamic>;
-          return MaterialPageRoute(
-            builder: (_) => ResetPasswordScreen(
-              token: args['token'] as String,
-            ),
-          );
-        }
-        return null;
-      },
-    ),
   );
 }
 
