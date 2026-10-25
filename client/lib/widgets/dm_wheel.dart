@@ -79,28 +79,8 @@ class _DMQuickAccessWheelState extends State<DMQuickAccessWheel>
     widget.isOpen ? _openController.forward() : _openController.reverse();
   }
 
-  Offset _avatarPosition(int index, int total) {
-    if (total == 0) return Offset.zero;
-    final startAngle =
-        widget.mode == DMWheelMode.left ? -pi / 2 : pi / 2;
-    final endAngle =
-        widget.mode == DMWheelMode.left ? pi / 2 : 3 * pi / 2;
-    final angle = startAngle +
-        (endAngle - startAngle) * index / (total - 1 > 0 ? total - 1 : 1);
-    final radius = _innerRadius + (_wheelRadius - _innerRadius) * 0.5;
-    return Offset(radius * cos(angle), radius * sin(angle));
-  }
-
-  DMWheelEdge _edgeForClipper() {
-    return widget.mode == DMWheelMode.left ? DMWheelEdge.left : DMWheelEdge.right;
-  }
-
-  void _toggle() {
-    widget.onOpenChanged(!widget.isOpen);
-    widget.isOpen ? _openController.forward() : _openController.reverse();
-  }
-
   @override
+  Widget build(BuildContext context) {
   Widget build(BuildContext context) {
     if (widget.mode == DMWheelMode.off || widget.dms.isEmpty) {
       return const SizedBox.shrink();
