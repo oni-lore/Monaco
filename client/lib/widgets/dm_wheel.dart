@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:monaco/models/message.dart';
 import 'package:monaco/utils/design_system.dart';
@@ -32,7 +34,6 @@ class _DMQuickAccessWheelState extends State<DMQuickAccessWheel>
 
   static const double _wheelRadius = 220.0;
   static const double _avatarSize = 52.0;
-  static const double _innerRadius = 90.0;
 
 
   @override

@@ -132,7 +132,8 @@ class MonacoApp extends StatelessWidget {
       '/search': (_) => const SearchScreen(),
       '/profile': (_) => const ProfileScreen(),
       },
-    );
+    ),
+  );
 }
 
 class AuthGate extends StatelessWidget {
