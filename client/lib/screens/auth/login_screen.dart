@@ -33,18 +33,17 @@ class _LoginScreenState extends State<LoginScreen> {
             padding: const EdgeInsets.all(24),
             child: Form(
               key: _formKey,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                  ),
-                  const SizedBox(height: 24),
-                  Text(
-                    'Welcome to Monaco',
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  'Welcome to Monaco',
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                           color: Colors.indigo,
-                        ),
-                      ),
+                    ),
+                  ),
                   const SizedBox(height: 8),
                   Text(
                     'Moanark Council • Private Messaging',

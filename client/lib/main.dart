@@ -23,7 +23,6 @@ ThemeData _monoThemeData({required Brightness brightness}) {
       brightness: brightness,
     ),
     scaffoldBackgroundColor: MonacoDesign.charcoalDeep,
-    scaffoldBodyColor: MonacoDesign.charcoalDeep,
     appBarTheme: const AppBarTheme(
       backgroundColor: MonacoDesign.charcoalDeep,
       elevation: 0,
@@ -39,7 +38,6 @@ ThemeData _monoThemeData({required Brightness brightness}) {
     ),
     cardTheme: CardTheme(
       color: MonacoDesign.charcoalCard,
-      borderRadius: BorderRadius.circular(MonacoDesign.radiusLg),
       elevation: 0,
     ),
     bottomNavigationBarTheme: BottomNavigationBarThemeData(
@@ -134,7 +132,7 @@ class MonacoApp extends StatelessWidget {
       '/search': (_) => const SearchScreen(),
       '/profile': (_) => const ProfileScreen(),
       },
-  );
+    );
 }
 
 class AuthGate extends StatelessWidget {

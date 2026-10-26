@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:monaco/models/message.dart';
 import 'package:monaco/utils/design_system.dart';
@@ -67,8 +65,6 @@ class _DMQuickAccessWheelState extends State<DMQuickAccessWheel>
     super.dispose();
   }
 
-  }
-
   void _selectContact(Conversation dm) {
     widget.onContactSelected(dm.id);
     _toggle();
@@ -79,8 +75,20 @@ class _DMQuickAccessWheelState extends State<DMQuickAccessWheel>
     widget.isOpen ? _openController.forward() : _openController.reverse();
   }
 
+  DMWheelEdge _edgeForClipper() {
+    return widget.mode == DMWheelMode.left ? DMWheelEdge.left : DMWheelEdge.right;
+  }
+
+  Offset _avatarPosition(int index, int total) {
+    final angle = (index / total) * 3.14159;
+    final radius = _wheelRadius - _avatarSize;
+    return Offset(
+      _wheelRadius + radius * -angle.cos(),
+      _wheelRadius + radius * angle.sin(),
+    );
+  }
+
   @override
-  Widget build(BuildContext context) {
   Widget build(BuildContext context) {
     if (widget.mode == DMWheelMode.off || widget.dms.isEmpty) {
       return const SizedBox.shrink();
