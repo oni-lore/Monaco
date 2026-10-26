@@ -27,6 +27,7 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<void> _initializeAuth() async {
+    debugPrint('AuthProvider._initializeAuth: started');
     _isLoading = true;
     notifyListeners();
 
@@ -36,35 +37,45 @@ class AuthProvider extends ChangeNotifier {
       final refreshToken = prefs.getString('refresh_token');
 
       if (accessToken != null && refreshToken != null) {
+        debugPrint('AuthProvider._initializeAuth: tokens found, loading profile');
         _tokens = AuthTokens(accessToken: accessToken, refreshToken: refreshToken);
         await _loadUserProfile();
+      } else {
+        debugPrint('AuthProvider._initializeAuth: no tokens found');
       }
     } catch (e) {
+      debugPrint('AuthProvider._initializeAuth: exception caught');
       await _clearAuthData();
     } finally {
       _isInitialized = true;
       _isLoading = false;
+      debugPrint('AuthProvider._initializeAuth: finished, isInitialized=$_isInitialized');
       notifyListeners();
     }
   }
 
   Future<void> _loadUserProfile() async {
-    if (_tokens == null) return;
+    debugPrint('AuthProvider._loadUserProfile: started');
+    if (_tokens == null) {
+      debugPrint('AuthProvider._loadUserProfile: no tokens, aborting');
+      return;
+    }
     try {
       final prefs = await SharedPreferences.getInstance();
       final userJson = prefs.getString('user_data');
       if (userJson != null) {
         _user = User.fromJson(jsonDecode(userJson) as Map<String, dynamic>);
       }
-      // Also try to fetch fresh profile from server
       try {
         final freshUser = await ChatApiService().getMyProfile(accessToken: _tokens!.accessToken);
         _user = freshUser;
         await _saveUserData(freshUser);
+        debugPrint('AuthProvider._loadUserProfile: profile loaded from server');
       } catch (_) {
-        // Server may be unreachable, use cached data
+        debugPrint('AuthProvider._loadUserProfile: server unreachable, using cached data');
       }
     } catch (e) {
+      debugPrint('AuthProvider._loadUserProfile: exception caught');
       await _clearAuthData();
     }
   }

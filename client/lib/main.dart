@@ -145,11 +145,14 @@ class AuthGate extends StatelessWidget {
   Widget build(BuildContext context) => Consumer<AuthProvider>(
     builder: (BuildContext context, AuthProvider auth, Widget? _) {
       if (!auth.isInitialized) {
+        debugPrint('AuthGate: showing MonacoLoader (isInitialized=false)');
         return const MonacoLoader();
       }
       if (auth.isAuthenticated) {
+        debugPrint('AuthGate: showing HomeScreen (isAuthenticated=true)');
         return const HomeScreen();
       }
+      debugPrint('AuthGate: showing LoginScreen (isInitialized=true, isAuthenticated=false)');
       return const LoginScreen();
     },
   );
