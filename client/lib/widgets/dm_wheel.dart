@@ -107,22 +107,16 @@ class _DMQuickAccessWheelState extends State<DMQuickAccessWheel>
             if (!widget.isOpen)
               Positioned(
                 top: safeArea.top + 60.0,
-                left: isLeft ? null : -_wheelRadius * (1.0 - open),
-                right: isLeft ? -_wheelRadius * (1.0 - open) : null,
-                child: GestureDetector(
-                  onTap: () => _toggle(),
-                  child: SizedBox(
-                    width: 48,
-                    height: 48,
-                    child: Center(
-                      child: Icon(
-                        isLeft
-                            ? Icons.chevron_right_rounded
-                            : Icons.chevron_left_rounded,
-                        color: MonacoDesign.accentBright,
-                        size: 24,
-                      ),
-                    ),
+                left: isLeft ? 0.0 : null,
+                right: isLeft ? null : 0.0,
+                child: IconButton(
+                  onPressed: _toggle,
+                  icon: Icon(
+                    isLeft
+                        ? Icons.chevron_right_rounded
+                        : Icons.chevron_left_rounded,
+                    color: MonacoDesign.accentBright,
+                    size: 24,
                   ),
                 ),
               ),
