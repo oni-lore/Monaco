@@ -235,25 +235,19 @@ class _DMWheelClipper extends CustomClipper<Path> {
     final radius = size.width / 2;
 
     if (edge == DMWheelEdge.left) {
-      path.moveTo(0, center.dy);
-      path.arcToPoint(
-        Offset(0, center.dy),
-        radius: Radius.circular(radius),
-        largeArc: false,
-        clockwise: false,
+      path.addArc(
+        Rect.fromCircle(center: center, radius: radius),
+        -3.14159 / 2,
+        -3.14159,
       );
-      path.lineTo(0, center.dy);
     } else {
-      path.moveTo(size.width, center.dy);
-      path.arcToPoint(
-        Offset(size.width, center.dy),
-        radius: Radius.circular(radius),
-        largeArc: false,
-        clockwise: true,
+      path.addArc(
+        Rect.fromCircle(center: center, radius: radius),
+        -3.14159 / 2,
+        3.14159,
       );
-      path.lineTo(size.width, center.dy);
     }
-
+    path.lineTo(center.dx, center.dy);
     path.close();
     return path;
   }
