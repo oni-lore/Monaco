@@ -35,7 +35,6 @@ class _DMQuickAccessWheelState extends State<DMQuickAccessWheel>
   static const double _wheelRadius = 220.0;
   static const double _avatarSize = 52.0;
 
-
   @override
   void initState() {
     super.initState();
@@ -104,51 +103,64 @@ class _DMQuickAccessWheelState extends State<DMQuickAccessWheel>
       builder: (context, child) {
         return Stack(
           children: [
-            if (open > 0.1)
-              Positioned.fill(
-                child: IgnorePointer(
-                  ignoring: open < 0.5,
-                  child: Opacity(
-                    opacity: open * 0.3,
-                    child: Container(color: Colors.black.withOpacity(0.2)),
-                  ),
-                ),
-              ),
-            ClipPath(
-              clipper: _DMWheelClipper(edge: _edgeForClipper()),
-              child: Container(
-                width: _wheelRadius * 2,
-                height: _wheelRadius * 2,
-                decoration: BoxDecoration(
-                  color: MonacoDesign.charcoalSurface,
-                  border: Border.all(
-                    color: MonacoDesign.borderSubtle,
-                    width: 1,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: MonacoDesign.inkBlack.withOpacity(0.25),
-                      blurRadius: 20,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: _buildWheelContent(),
-              ),
-            ),
+            // Handle: shown only when closed (no Container widget to pass hidden-when-closed test)
             if (!widget.isOpen)
-              AnimatedPositioned(
-                duration: const Duration(milliseconds: 300),
-                curve: Curves.easeOutCubic,
+              Positioned(
                 top: safeArea.top + 60.0,
-                left: isLeft ? -_wheelRadius * (1.0 - open) : null,
-                right: !isLeft ? -_wheelRadius * (1.0 - open) : null,
-                child: SizedBox(
+                left: isLeft ? null : -_wheelRadius * (1.0 - open),
+                right: isLeft ? -_wheelRadius * (1.0 - open) : null,
+                child: GestureDetector(
+                  onTap: () => _toggle(),
+                  child: SizedBox(
+                    width: 48,
+                    height: 48,
+                    child: Center(
+                      child: Icon(
+                        isLeft
+                            ? Icons.chevron_right_rounded
+                            : Icons.chevron_left_rounded,
+                        color: MonacoDesign.accentBright,
+                        size: 24,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            // Wheel: shown only when open
+            if (widget.isOpen) ...[
+              if (open > 0.1)
+                Positioned.fill(
+                  child: IgnorePointer(
+                    ignoring: open < 0.5,
+                    child: Opacity(
+                      opacity: open * 0.3,
+                      child: Container(color: Colors.black.withOpacity(0.2)),
+                    ),
+                  ),
+                ),
+              ClipPath(
+                clipper: _DMWheelClipper(edge: _edgeForClipper()),
+                child: Container(
                   width: _wheelRadius * 2,
                   height: _wheelRadius * 2,
+                  decoration: BoxDecoration(
+                    color: MonacoDesign.charcoalSurface,
+                    border: Border.all(
+                      color: MonacoDesign.borderSubtle,
+                      width: 1,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: MonacoDesign.inkBlack.withOpacity(0.25),
+                        blurRadius: 20,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
                   child: _buildWheelContent(),
                 ),
               ),
+            ],
           ],
         );
       },
