@@ -1,14 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:monaco/providers/auth_provider.dart';
 import 'package:monaco/providers/dm_wheel_mode_provider.dart';
 import 'package:monaco/screens/auth/login_screen.dart';
 import 'package:monaco/screens/auth/registration_screen.dart';
 import 'package:monaco/screens/auth/forgot_password_screen.dart';
-import 'package:monaco/screens/auth/reset_password_screen.dart';
 import 'package:monaco/screens/home_screen.dart';
-import 'package:monaco/screens/conversation_screen.dart';
 import 'package:monaco/screens/search_screen.dart';
 import 'package:monaco/screens/profile_screen.dart';
 import 'package:monaco/screens/loading_chambers_screen.dart';
