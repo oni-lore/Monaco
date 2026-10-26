@@ -146,8 +146,20 @@ void main() {
 
       await tester.tap(find.byIcon(Icons.chevron_left_rounded).first);
       await tester.pumpAndSettle();
-
       expect(opened, isTrue);
+      // Rebuild with isOpen: true to simulate parent responding to onOpenChanged
+      await tester.pumpWidget(
+        MaterialApp(
+          home: DMQuickAccessWheel(
+            mode: DMWheelMode.right,
+            dms: createTestDMs(),
+            onContactSelected: (id) {},
+            isOpen: true,
+            onOpenChanged: (isOpen) => opened = isOpen,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
       expect(find.byIcon(Icons.send_rounded), findsNothing);
       expect(find.byType(Container), findsWidgets);
     });
