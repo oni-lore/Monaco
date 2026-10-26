@@ -84,8 +84,8 @@ class _DMQuickAccessWheelState extends State<DMQuickAccessWheel>
     final angle = (index / total) * 3.14159;
     final radius = _wheelRadius - _avatarSize;
     return Offset(
-      _wheelRadius + radius * -cos(angle),
       _wheelRadius + radius * sin(angle),
+      _wheelRadius - radius * cos(angle),
     );
   }
 
