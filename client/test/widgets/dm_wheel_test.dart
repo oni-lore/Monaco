@@ -144,7 +144,7 @@ void main() {
 
       await tester.pumpAndSettle();
 
-      await tester.tap(find.byIcon(Icons.chevron_right_rounded).first);
+      await tester.tap(find.byIcon(Icons.chevron_left_rounded).first);
       await tester.pumpAndSettle();
 
       expect(opened, isTrue);
