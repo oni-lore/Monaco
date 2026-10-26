@@ -12,6 +12,11 @@ import 'package:monaco/screens/loading_chambers_screen.dart';
 import 'package:monaco/utils/design_system.dart';
 import 'package:monaco/widgets/monaco_loader.dart';
 
+void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  runApp(const MonacoApp());
+}
+
 ThemeData _monoThemeData({required Brightness brightness}) {
   return ThemeData(
     useMaterial3: true,
