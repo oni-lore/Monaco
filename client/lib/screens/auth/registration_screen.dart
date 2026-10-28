@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:monaco/providers/auth_provider.dart';
+import 'package:monaco/utils/design_system.dart';
 import 'package:monaco/widgets/custom_button.dart';
 
 class RegistrationScreen extends StatefulWidget {
