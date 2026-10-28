@@ -95,13 +95,13 @@ ThemeData _monoThemeData({required Brightness brightness}) {
     iconTheme: const IconThemeData(color: MonacoDesign.accentBright),
     textButtonTheme: TextButtonThemeData(
       style: TextButton.styleFrom(
-        foregroundColor: MonacoDesign.inkBlack,
+        foregroundColor: MonacoDesign.accentBright,
         backgroundColor: Colors.transparent,
       ),
     ),
     filledButtonTheme: FilledButtonThemeData(
       style: FilledButton.styleFrom(
-        backgroundColor: MonacoDesign.inkBlack,
+        backgroundColor: MonacoDesign.charcoalCard,
         foregroundColor: MonacoDesign.accentBright,
         elevation: 0,
       ),

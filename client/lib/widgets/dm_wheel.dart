@@ -128,7 +128,7 @@ class _DMQuickAccessWheelState extends State<DMQuickAccessWheel>
                     ignoring: open < 0.5,
                     child: Opacity(
                       opacity: open * 0.3,
-                      child: Container(color: Colors.black.withOpacity(0.2)),
+                      child: Container(color: MonacoDesign.inkBlack.withOpacity(0.2)),
                     ),
                   ),
                 ),

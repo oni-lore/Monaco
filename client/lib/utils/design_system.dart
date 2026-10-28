@@ -5,24 +5,24 @@ import 'package:flutter/material.dart';
 /// refined typography, restrained highlights, Batman–Alfred-inspired atmosphere.
 class MonacoDesign {
   // ── Monochrome brand palette ────────────────────────────────────────────
-  static const Color inkBlack = Color(0xFF0A0A0A);       // Near-black text
+  static const Color inkBlack = Color(0xFF0A0A0A);       // Deep charcoal (retained for shadows/borders)
   static const Color charcoalDeep = Color(0xFF121212);   // Deep charcoal background
   static const Color charcoalSurface = Color(0xFF1E1E1E); // Charcoal cards
   static const Color charcoalCard = Color(0xFF252525);   // Slightly lighter cards
   static const Color charcoalElevated = Color(0xFF2D2D2D); // Elevated surfaces
   static const Color borderSubtle = Color(0xFF333333);   // Subtle borders
   static const Color borderMuted = Color(0xFF2A2A2A);    // Muted borders
-  static const Color textInk = Color(0xFF0A0A0A);        // Near-black primary text
-  static const Color textBody = Color(0xFF222222);       // Body text
-  static const Color textSecondary = Color(0xFF555555);  // Secondary text
-  static const Color textMuted = Color(0xFF777777);      // Muted text
+  static const Color textInk = Color(0xFFFFFFFF);        // Pure white primary text (dark theme)
+  static const Color textBody = Color(0xFFE0E0E0);       // Light gray body text
+  static const Color textSecondary = Color(0xFFB0B0B0);  // Light gray secondary text
+  static const Color textMuted = Color(0xFF808080);      // Medium gray muted text
   static const Color accentSoft = Color(0xFFD9D9D9);     // Soft highlight
   static const Color accentBright = Color(0xFFFFFFFF);   // Pure white highlight
 
-  // ── Semantic colors (monochrome variants) ──────────────────────────────
-  static const Color success = Color(0xFFD9D9D9); // Soft gray-green
-  static const Color warning = Color(0xFFB3B3B3); // Muted amber-gray
-  static const Color error = Color(0xFF8A8A8A);   // Subtle red-gray
+  // ── Semantic colors (monochrome variants) ──────────────
+  static const Color success = Color(0xFFD9D9D9); // Light gray success
+  static const Color warning = Color(0xFFE0E0E0); // Light gray warning
+  static const Color error = Color(0xFFFF5252);   // Visible red error
 
   // ── Spacing ────────────────────────────────────────────────────────────
   static const double xs = 4;
@@ -95,7 +95,7 @@ class MonacoDesign {
 
   // ── Button style helpers (monochrome) ──────────────────────────────────
   static ButtonStyle primaryButton(BuildContext context) => FilledButton.styleFrom(
-    backgroundColor: inkBlack,
+    backgroundColor: charcoalCard,
     foregroundColor: accentBright,
     elevation: 0,
     shadowColor: inkBlack.withOpacity(0.2),

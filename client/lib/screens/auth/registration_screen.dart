@@ -46,7 +46,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                   const Icon(
                     Icons.person_add_outlined,
                     size: 80,
-                    color: Colors.indigo,
+                    color: MonacoDesign.accentBright,
                   ),
                   const SizedBox(height: 24),
                   Text(
@@ -54,7 +54,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                           fontWeight: FontWeight.bold,
-                          color: Colors.indigo,
+                          color: MonacoDesign.accentBright,
                         ),
                       ),
                   const SizedBox(height: 8),
@@ -62,7 +62,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                     'Moanark Council • Private Messaging',
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color: Colors.grey[600],
+                          color: MonacoDesign.textSecondary,
                         ),
                       ),
                   const SizedBox(height: 48),

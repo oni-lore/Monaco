@@ -223,7 +223,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: Colors.black87),
+          icon: const Icon(Icons.arrow_back_rounded, color: MonacoDesign.accentBright),
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
@@ -235,7 +235,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             // Profile header
             CircleAvatar(
               radius: 52,
-              backgroundColor: MonacoDesign.inkBlack,
+              backgroundColor: MonacoDesign.charcoalCard,
               child: Text(
                 (_username ?? user?.username ?? 'U').isNotEmpty
                     ? (_username ?? user!.username).substring(0, 1).toUpperCase()
