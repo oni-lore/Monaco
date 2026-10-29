@@ -32,4 +32,4 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
-    - assets/images/monaco_logo.png
+    - assets/images/monaco_logo.svg

@@ -164,21 +164,11 @@ class _HomeScreenState extends State<HomeScreen>
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(MonacoDesign.radiusMd - 1),
-              child: Image.asset(
-                'assets/images/monaco_logo.png',
+              child: SvgPicture.asset(
+                'assets/images/monaco_logo.svg',
                 width: 32,
                 height: 32,
                 fit: BoxFit.contain,
-                errorBuilder: (context, error, stackTrace) => const Center(
-                  child: Text(
-                    'M',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w900,
-                      color: MonacoDesign.accentBright,
-                    ),
-                  ),
-                ),
               ),
             ),
           ),
