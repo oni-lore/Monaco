@@ -27,17 +27,22 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: true,
+      backgroundColor: MonacoDesign.charcoalDeep,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(24),
             child: Form(
               key: _formKey,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  'Welcome to Monaco',
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const SizedBox(height: 16),
+                  Text(
+                    'Welcome to Monaco',
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                           fontWeight: FontWeight.bold,
@@ -50,15 +55,27 @@ class _LoginScreenState extends State<LoginScreen> {
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                           color: MonacoDesign.textSecondary,
-                        ),
-                      ),
-                  const SizedBox(height: 48),
+                    ),
+                  ),
+                  const SizedBox(height: 40),
                   TextFormField(
                     controller: _usernameController,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
+                      filled: true,
+                      fillColor: MonacoDesign.charcoalSurface,
                       labelText: 'Username',
-                      prefixIcon: Icon(Icons.person_outline),
+                      labelStyle: TextStyle(color: MonacoDesign.textSecondary),
+                      prefixIcon: Icon(Icons.person_outline, color: MonacoDesign.textSecondary),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: MonacoDesign.borderMuted, width: 1),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: MonacoDesign.accentBright, width: 1.5),
+                      ),
                     ),
+                    style: TextStyle(color: MonacoDesign.accentBright),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return 'Please enter your username';
@@ -75,17 +92,30 @@ class _LoginScreenState extends State<LoginScreen> {
                     controller: _passwordController,
                     obscureText: _obscurePassword,
                     decoration: InputDecoration(
+                      filled: true,
+                      fillColor: MonacoDesign.charcoalSurface,
                       labelText: 'Password',
-                      prefixIcon: const Icon(Icons.lock_outline),
+                      labelStyle: TextStyle(color: MonacoDesign.textSecondary),
+                      prefixIcon: const Icon(Icons.lock_outline, color: MonacoDesign.textSecondary),
                       suffixIcon: IconButton(
                         icon: Icon(
                           _obscurePassword
                               ? Icons.visibility_off
                               : Icons.visibility,
+                          color: MonacoDesign.textSecondary,
                         ),
                         onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                       ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: MonacoDesign.borderMuted, width: 1),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: MonacoDesign.accentBright, width: 1.5),
+                      ),
                     ),
+                    style: TextStyle(color: MonacoDesign.accentBright),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return 'Please enter your password';
@@ -98,48 +128,57 @@ class _LoginScreenState extends State<LoginScreen> {
                     textInputAction: TextInputAction.done,
                     onFieldSubmitted: (_) => _handleLogin(),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 12),
                   Align(
                     alignment: Alignment.centerRight,
                     child: TextButton(
                       onPressed: () => _navigateToForgotPassword(),
-                      child: const Text('Forgot Password?'),
+                      child: const Text('Forgot Password?', style: TextStyle(fontSize: 14)),
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 28),
                   Consumer<AuthProvider>(
                     builder: (BuildContext context, AuthProvider auth, Widget? _) {
-                      return OutlinedButton(
-                        onPressed: auth.isLoggingIn ? null : _handleLogin,
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: MonacoDesign.inkBlack,
-                          side: BorderSide(color: MonacoDesign.borderSubtle, width: 1),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                      return SizedBox(
+                        width: double.infinity,
+                        height: 52,
+                        child: OutlinedButton(
+                          onPressed: auth.isLoggingIn ? null : _handleLogin,
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: MonacoDesign.accentBright,
+                            side: BorderSide(color: MonacoDesign.borderSubtle, width: 1.5),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                           ),
-                          minimumSize: const Size(double.infinity, 52),
-                        ),
-                        child: const Text(
-                          'Login',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
+                          child: const Text(
+                            'Login',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: MonacoDesign.accentBright,
+                            ),
                           ),
                         ),
                       );
                     },
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 24),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Text("Don't have an account? "),
+                      const Text("Don't have an account? ",
+                        style: TextStyle(color: MonacoDesign.textSecondary)),
                       TextButton(
                         onPressed: () => Navigator.pushNamed(context, '/register'),
-                        child: const Text('Register'),
+                        child: const Text(
+                          'Register',
+                          style: TextStyle(color: MonacoDesign.accentBright, fontSize: 14),
+                        ),
                       ),
                     ],
                   ),
+                  const SizedBox(height: 16),
                 ],
               ),
             ),
