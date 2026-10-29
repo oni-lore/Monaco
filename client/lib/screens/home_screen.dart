@@ -150,6 +150,7 @@ class _HomeScreenState extends State<HomeScreen>
     return Padding(
       padding: const EdgeInsets.fromLTRB(MonacoDesign.lg, MonacoDesign.lg, MonacoDesign.lg, MonacoDesign.sm),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Container(
             width: 40,
@@ -162,16 +163,16 @@ class _HomeScreenState extends State<HomeScreen>
             child: const Center(
               child: Text(
                 'M',
+                textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w900,
                   color: MonacoDesign.accentBright,
-                  letterSpacing: -1,
                 ),
               ),
             ),
           ),
-          const SizedBox(width: MonacoDesign.md),
+          const SizedBox(width: MonacoDesign.sm),
           const Text(
             'Monaco',
             style: TextStyle(
