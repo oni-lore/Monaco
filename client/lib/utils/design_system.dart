@@ -106,7 +106,7 @@ class MonacoDesign {
   );
 
   static ButtonStyle secondaryButton(BuildContext context) => OutlinedButton.styleFrom(
-    foregroundColor: inkBlack,
+    foregroundColor: accentBright,
     minimumSize: const Size(double.infinity, 52),
     padding: const EdgeInsets.symmetric(vertical: 16),
     side: BorderSide(color: borderSubtle, width: 1.5),
@@ -115,7 +115,7 @@ class MonacoDesign {
   );
 
   static ButtonStyle textButton(BuildContext context) => TextButton.styleFrom(
-    foregroundColor: inkBlack,
+    foregroundColor: accentBright,
     minimumSize: const Size(double.infinity, 48),
     padding: const EdgeInsets.symmetric(vertical: 12),
     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(radiusMd)),
@@ -149,7 +149,7 @@ class MonacoDesign {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(radiusMd),
-          borderSide: BorderSide(color: inkBlack, width: 1.5),
+          borderSide: BorderSide(color: accentBright, width: 1.5),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(radiusMd),

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import 'package:monaco/providers/auth_provider.dart';
 import 'package:monaco/providers/dm_wheel_mode_provider.dart';
@@ -145,13 +146,14 @@ class _HomeScreenState extends State<HomeScreen>
     });
   }
 
-  // ── Monaco header ──────────────────────────────────────────────────────
+  // ── Monaco header with crown logo ────────────────────────────────────────
   Widget _buildHeader() {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(MonacoDesign.lg, MonacoDesign.lg, MonacoDesign.lg, MonacoDesign.sm),
+      padding: const EdgeInsets.fromLTRB(MonacoDesign.lg, MonacoDesign.md, MonacoDesign.lg, MonacoDesign.md),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
+          // Monaco crown logo
           Container(
             width: 40,
             height: 40,
@@ -160,14 +162,22 @@ class _HomeScreenState extends State<HomeScreen>
               borderRadius: BorderRadius.circular(MonacoDesign.radiusMd),
               border: Border.all(color: MonacoDesign.borderMuted, width: 1),
             ),
-            child: const Center(
-              child: Text(
-                'M',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w900,
-                  color: MonacoDesign.accentBright,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(MonacoDesign.radiusMd - 1),
+              child: Image.asset(
+                'assets/images/monaco_logo.png',
+                width: 32,
+                height: 32,
+                fit: BoxFit.contain,
+                errorBuilder: (context, error, stackTrace) => const Center(
+                  child: Text(
+                    'M',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w900,
+                      color: MonacoDesign.accentBright,
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -204,57 +214,50 @@ class _HomeScreenState extends State<HomeScreen>
           hint: 'People, messages, Councils',
           prefixIcon: Icons.search_rounded,
         ),
+        style: const TextStyle(
+          color: MonacoDesign.textInk,
+          fontSize: 14,
+        ),
       ),
     );
   }
 
-  // ── Notes section: intentional empty state (no Notes API exists) ────────
-  Widget _buildNotesSection() {
+  // ── Empty state for no conversations ─────────────────────────────────
+  Widget _buildEmptyState() {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: MonacoDesign.lg),
-          child: Row(
-            children: [
-              Text(
-                'Notes',
-                style: MonacoDesign.labelMedium(context).copyWith(
-                  color: MonacoDesign.textMuted,
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: MonacoDesign.sm),
         Container(
-          width: double.infinity,
-          height: 110,
+          width: 80,
+          height: 80,
           decoration: BoxDecoration(
             color: MonacoDesign.charcoalSurface,
             borderRadius: BorderRadius.circular(MonacoDesign.radiusLg),
             border: Border.all(color: MonacoDesign.borderMuted, width: 1),
           ),
           child: const Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.note_add_rounded,
-                  size: 32,
-                  color: MonacoDesign.textMuted,
-                ),
-                SizedBox(height: MonacoDesign.sm),
-                Text(
-                  'Notes coming soon',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: MonacoDesign.textSecondary,
-                  ),
-                ),
-              ],
+            child: Icon(
+              Icons.chat_bubble_outline_rounded,
+              size: 36,
+              color: MonacoDesign.textSecondary,
             ),
+          ),
+        ),
+        const SizedBox(height: MonacoDesign.md),
+        Text(
+          'No conversations yet',
+          style: MonacoDesign.headlineMedium(context).copyWith(
+            fontWeight: FontWeight.w800,
+            color: MonacoDesign.textInk,
+          ),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: MonacoDesign.sm),
+        Text(
+          'Start a new direct message or join a Council.',
+          textAlign: TextAlign.center,
+          style: MonacoDesign.bodyMedium(context).copyWith(
+            color: MonacoDesign.textSecondary,
           ),
         ),
       ],
@@ -442,7 +445,7 @@ class _HomeScreenState extends State<HomeScreen>
           decoration: BoxDecoration(
             color: MonacoDesign.charcoalSurface,
             borderRadius: BorderRadius.circular(MonacoDesign.radiusMd),
-            border: Border.all(color: MonacoDesign.inkBlack, width: 2),
+            border: Border.all(color: MonacoDesign.borderSubtle, width: 1),
           ),
           child: const Center(
             child: Text(
@@ -718,11 +721,14 @@ class _HomeScreenState extends State<HomeScreen>
                             if (_error != null) _buildErrorPanel(),
                             _buildSearchBar(),
                             const SizedBox(height: MonacoDesign.xl),
-                            _buildNotesSection(),
-                            const SizedBox(height: MonacoDesign.xxl),
-                            _buildCouncilsSection(),
-                            const SizedBox(height: MonacoDesign.xxl),
-                            _buildRecentDMSection(),
+                            if (_conversations.isEmpty) ...[
+                              const SizedBox(height: MonacoDesign.xl),
+                              _buildEmptyState(),
+                            ] else ...[
+                              _buildCouncilsSection(),
+                              const SizedBox(height: MonacoDesign.xxl),
+                              _buildRecentDMSection(),
+                            ],
                           ],
                         ),
                       ),
@@ -760,9 +766,11 @@ class _HomeScreenState extends State<HomeScreen>
           backgroundColor: MonacoDesign.charcoalSurface,
           type: BottomNavigationBarType.fixed,
           selectedItemColor: MonacoDesign.accentBright,
-          unselectedItemColor: MonacoDesign.textMuted,
+          unselectedItemColor: MonacoDesign.textSecondary,
           showSelectedLabels: true,
           showUnselectedLabels: true,
+          selectedLabelStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+          unselectedLabelStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
           items: [
             BottomNavigationBarItem(
               icon: const Icon(Icons.chat_bubble_outline_rounded, size: 24),
@@ -811,6 +819,7 @@ class _HomeScreenState extends State<HomeScreen>
               fontWeight: FontWeight.w800,
               color: MonacoDesign.textInk,
             ),
+            textAlign: TextAlign.center,
           ),
           const SizedBox(height: MonacoDesign.sm),
           Text(
@@ -832,7 +841,7 @@ class _HomeScreenState extends State<HomeScreen>
   }
 }
 
-/// Council visual styles for the asymmetric mosaic
+// ── Council visual styles for the asymmetric mosaic ─────────────────────
 enum CouncilStyle {
   wide,    // Wide horizontal card
   tall,    // Tall vertical card
