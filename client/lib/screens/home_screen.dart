@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import 'package:monaco/providers/auth_provider.dart';
 import 'package:monaco/providers/dm_wheel_mode_provider.dart';
@@ -149,7 +148,7 @@ class _HomeScreenState extends State<HomeScreen>
   // ── Monaco header with crown logo ────────────────────────────────────────
   Widget _buildHeader() {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(MonacoDesign.lg, MonacoDesign.md, MonacoDesign.lg, MonacoDesign.md),
+      padding: const EdgeInsets.fromLTRB(MonacoDesign.lg, MonacoDesign.lg, MonacoDesign.lg, MonacoDesign.lg),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -162,10 +161,9 @@ class _HomeScreenState extends State<HomeScreen>
               borderRadius: BorderRadius.circular(MonacoDesign.radiusMd),
               border: Border.all(color: MonacoDesign.borderMuted, width: 1),
             ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(MonacoDesign.radiusMd - 1),
-              child: SvgPicture.asset(
-                'assets/images/monaco_logo.svg',
+            child: const Center(
+              child: Image(
+                image: AssetImage('assets/images/monaco_logo.jpg'),
                 width: 32,
                 height: 32,
                 fit: BoxFit.contain,
@@ -180,6 +178,10 @@ class _HomeScreenState extends State<HomeScreen>
               fontWeight: FontWeight.w900,
               color: MonacoDesign.accentBright,
               letterSpacing: -0.5,
+              height: 1.0,
+            ),
+            strutStyle: StrutStyle(
+              forceStrutHeight: true,
             ),
           ),
           const Spacer(),
@@ -207,7 +209,9 @@ class _HomeScreenState extends State<HomeScreen>
         style: const TextStyle(
           color: MonacoDesign.textInk,
           fontSize: 14,
+          height: 1.2,
         ),
+        textAlignVertical: TextAlignVertical.center,
       ),
     );
   }
@@ -759,8 +763,16 @@ class _HomeScreenState extends State<HomeScreen>
           unselectedItemColor: MonacoDesign.textSecondary,
           showSelectedLabels: true,
           showUnselectedLabels: true,
-          selectedLabelStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
-          unselectedLabelStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+          selectedLabelStyle: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            height: 1.0,
+          ),
+          unselectedLabelStyle: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+            height: 1.0,
+          ),
           items: [
             BottomNavigationBarItem(
               icon: const Icon(Icons.chat_bubble_outline_rounded, size: 24),
